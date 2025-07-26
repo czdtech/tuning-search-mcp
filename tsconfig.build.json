@@ -1,0 +1,68 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Production Build Optimizations
+    "removeComments": true,
+    "sourceMap": false,
+    "declarationMap": false,
+    "incremental": false,
+    "tsBuildInfoFile": null,
+    
+    // Stricter checks for production build
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "exactOptionalPropertyTypes": false,
+    
+    // Production emit optimizations
+    "stripInternal": true,
+    "noEmitHelpers": false,
+    "importHelpers": false,
+    "inlineSourceMap": false,
+    "inlineSources": false,
+    "preserveConstEnums": false,
+    "removeComments": true,
+    
+    // Module and output optimizations
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    
+    // Performance for production
+    "skipLibCheck": true,
+    "disableSourceOfProjectReferenceRedirect": true,
+    "disableSolutionSearching": true,
+    "disableReferencedProjectLoad": true,
+    
+    // Code generation optimizations
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "downlevelIteration": false,
+    "noEmitOnError": true,
+    "newLine": "lf"
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "src/__tests__/**/*",
+    "**/*.d.ts",
+    "coverage",
+    "*.config.js",
+    "*.config.ts",
+    "jest.config.js",
+    ".eslintrc.js",
+    "**/__mocks__/**/*",
+    "**/fixtures/**/*",
+    "**/*.mock.ts"
+  ]
+}

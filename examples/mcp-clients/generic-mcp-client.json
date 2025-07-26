@@ -1,0 +1,13 @@
+{
+  "servers": {
+    "tuningsearch": {
+      "command": "npx",
+      "args": ["-y", "tuningsearch-mcp-server"],
+      "environment": {
+        "TUNINGSEARCH_API_KEY": "your_api_key_here",
+        "TUNINGSEARCH_TIMEOUT": "30000",
+        "TUNINGSEARCH_RETRY_ATTEMPTS": "3"
+      }
+    }
+  }
+}

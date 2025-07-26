@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  tuningsearch-mcp-server:
+    image: node:18-alpine
+    container_name: tuningsearch-mcp-server
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - TUNINGSEARCH_API_KEY=${TUNINGSEARCH_API_KEY}
+      - TUNINGSEARCH_BASE_URL=${TUNINGSEARCH_BASE_URL:-https://api.tuningsearch.com/v1}
+      - TUNINGSEARCH_TIMEOUT=${TUNINGSEARCH_TIMEOUT:-30000}
+      - TUNINGSEARCH_RETRY_ATTEMPTS=${TUNINGSEARCH_RETRY_ATTEMPTS:-3}
+      - TUNINGSEARCH_RETRY_DELAY=${TUNINGSEARCH_RETRY_DELAY:-1000}
+      - TUNINGSEARCH_LOG_LEVEL=${TUNINGSEARCH_LOG_LEVEL:-info}
+    command: >
+      sh -c "
+        npm install -g tuningsearch-mcp-server &&
+        tuningsearch-mcp-server
+      "
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Optional: Add a reverse proxy if needed
+  nginx:
+    image: nginx:alpine
+    container_name: tuningsearch-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - tuningsearch-mcp-server
+    restart: unless-stopped
+    profiles:
+      - proxy

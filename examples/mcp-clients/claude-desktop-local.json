@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "tuningsearch": {
+      "command": "node",
+      "args": ["/path/to/tuningsearch-mcp-server/dist/index.js"],
+      "env": {
+        "TUNINGSEARCH_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}

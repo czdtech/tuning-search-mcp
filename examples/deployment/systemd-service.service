@@ -1,0 +1,33 @@
+[Unit]
+Description=TuningSearch MCP Server
+Documentation=https://github.com/tuningsearch/tuningsearch-mcp-server
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=tuningsearch
+Group=tuningsearch
+WorkingDirectory=/opt/tuningsearch-mcp-server
+Environment=NODE_ENV=production
+EnvironmentFile=/opt/tuningsearch-mcp-server/.env
+ExecStart=/usr/bin/npx tuningsearch-mcp-server
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tuningsearch-mcp-server
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/tuningsearch-mcp-server
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+[Install]
+WantedBy=multi-user.target

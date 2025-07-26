@@ -1,0 +1,110 @@
+# Source files and development configuration
+src/
+tsconfig.json
+tsconfig.build.json
+.eslintrc.js
+jest.config.js
+
+# Development and IDE files
+.vscode/
+.idea/
+.kiro/
+*.swp
+*.swo
+*~
+.editorconfig
+
+# Test files and coverage
+**/*.test.ts
+**/*.spec.ts
+**/__tests__/
+**/__mocks__/
+**/fixtures/
+coverage/
+.nyc_output/
+test-results/
+
+# Build artifacts (keep only dist/)
+.tsbuildinfo
+*.tsbuildinfo
+
+# Environment and configuration files
+.env*
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Logs and debugging
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Temporary folders and files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Git and version control
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD files
+.github/
+.travis.yml
+.circleci/
+.gitlab-ci.yml
+azure-pipelines.yml
+.buildkite/
+
+# Package manager files
+.yarn/
+.pnp.*
+yarn.lock
+pnpm-lock.yaml
+package-lock.json
+
+# Documentation source (keep built docs)
+docs/src/
+*.md.backup
+
+# Miscellaneous
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.vuepress/dist/
+.serverless/
+.fusebox/
+.dynamodb/
+.tern-port
+
+# Local development
+local/
+.local/
+
+# Project specific temporary files
+start-server.bat
+start-server.sh
+USAGE.md
+mcp-config-example.json
+debug-*.js
+test-*.js
+verify-*.js
+examples/

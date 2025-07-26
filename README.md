@@ -10,24 +10,28 @@ A powerful Model Context Protocol (MCP) server that integrates [TuningSearch API
 ## 🌟 Features
 
 ### 🔍 Web Search
+
 - **Comprehensive Search Results**: Get high-quality web search results with titles, URLs, content snippets, and metadata
 - **Advanced Filtering**: Support for language, country, time range, and safety filters
 - **Smart Ranking**: Results include quality scores and relevance ranking
 - **Search Suggestions**: Automatic query suggestions for better search experience
 
-### � News  Search
+### � News Search
+
 - **Real-time News**: Access to latest news articles from various sources
 - **Categorized Results**: News results with source information and publication dates
 - **Geographic Filtering**: Filter news by country and language
 - **Trending Topics**: Discover trending news topics and stories
 
 ### 🌐 Web Crawling
+
 - **Content Extraction**: Extract clean text content from any web page
 - **Smart Processing**: Automatic content cleaning and formatting
 - **Fast Response**: Optimized crawling with reasonable timeouts
 - **Error Handling**: Robust error handling for various web page types
 
 ### 🚀 Advanced Features
+
 - **Caching System**: Built-in response caching for improved performance
 - **Retry Mechanism**: Automatic retry with exponential backoff for failed requests
 - **Health Monitoring**: Comprehensive health checks and performance monitoring
@@ -146,6 +150,7 @@ Add to your Claude Desktop configuration file:
 Search the web for comprehensive results.
 
 **Parameters:**
+
 - `q` (required): Search query
 - `language` (optional): Language code (e.g., "en", "zh", "es")
 - `country` (optional): Country code (e.g., "US", "CN", "GB")
@@ -155,6 +160,7 @@ Search the web for comprehensive results.
 - `service` (optional): Search service to use
 
 **Example:**
+
 ```json
 {
   "q": "artificial intelligence latest developments",
@@ -170,6 +176,7 @@ Search the web for comprehensive results.
 Search for recent news articles.
 
 **Parameters:**
+
 - `q` (required): News search query
 - `language` (optional): Language code
 - `country` (optional): Country code
@@ -178,6 +185,7 @@ Search for recent news articles.
 - `service` (optional): News service to use
 
 **Example:**
+
 ```json
 {
   "q": "technology breakthrough 2025",
@@ -192,9 +200,11 @@ Search for recent news articles.
 Extract content from web pages.
 
 **Parameters:**
+
 - `url` (required): URL to crawl
 
 **Example:**
+
 ```json
 {
   "url": "https://example.com/article"
@@ -342,7 +352,7 @@ npm run test:coverage
 This server integrates with the [TuningSearch API](https://tuningsearch.com/docs). Key endpoints:
 
 - **Search**: `/search` - Web search functionality
-- **News**: `/news` - News search functionality  
+- **News**: `/news` - News search functionality
 - **Crawl**: `/crawl` - Web page content extraction
 
 ### MCP Protocol
@@ -356,6 +366,8 @@ Implements [Model Context Protocol](https://modelcontextprotocol.io/) specificat
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+For project structure and development guidelines, see [Project Structure](PROJECT-STRUCTURE.md).
 
 ### Development Workflow
 
@@ -404,4 +416,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ by the TuningSearch team**
 
-*Empowering AI assistants with comprehensive search capabilities*
+_Empowering AI assistants with comprehensive search capabilities_

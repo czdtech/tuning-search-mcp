@@ -13,8 +13,9 @@ npm install -g tuningsearch-mcp-server
 ### Step 2: Get API Key
 
 1. Visit [TuningSearch.com](https://tuningsearch.com)
-2. Sign up for free account
-3. Get your API key from dashboard
+2. Sign up for a free account
+3. Navigate to your dashboard
+4. Generate an API key
 
 ### Step 3: Configure
 
@@ -25,8 +26,10 @@ export TUNINGSEARCH_API_KEY="your_api_key_here"
 ### Step 4: Test
 
 ```bash
-tuningsearch-mcp-server
+tuningsearch-mcp-server --help
 ```
+
+You should see the help message confirming the installation is successful.
 
 ## 🤖 Claude Desktop Setup
 

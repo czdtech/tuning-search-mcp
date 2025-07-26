@@ -59,3 +59,14 @@ temp/
 # Package files
 *.tgz
 *.tar.gz
+
+# IDE specific files
+.kiro/
+.vscode/settings.json
+.idea/
+
+# Temporary files
+DEPLOYMENT-STATUS.md
+DEPLOYMENT.md
+USAGE.md
+start-server.*

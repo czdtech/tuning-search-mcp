@@ -111,7 +111,9 @@
     "dist/**/*",
     "README.md",
     "LICENSE",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "QUICK-START.md",
+    "examples/**/*"
   ],
   "publishConfig": {
     "access": "public",

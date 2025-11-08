@@ -73,20 +73,59 @@ export class NewsToolHandler {
    * Parse and validate news search arguments
    */
   private parseAndValidateArgs(args: unknown): NewsToolArgs {
+    const normalized = this.normalizeArgs(args);
+
+    // Explicit required-field check first for clearer error messaging
+    if (!normalized || typeof (normalized as any).q !== 'string' || ((normalized as any).q as string).trim().length === 0) {
+      throw new ValidationError(
+        'Invalid news search arguments',
+        ['News search query (q) is required and cannot be empty']
+      );
+    }
+
     // Basic type validation
-    if (!validateNewsToolArgs(args)) {
+    if (!validateNewsToolArgs(normalized)) {
       throw new ValidationError(
         'Invalid news search arguments',
         ['Arguments do not match expected NewsToolArgs schema']
       );
     }
 
-    const newsArgs = args as NewsToolArgs;
+    const newsArgs = normalized as NewsToolArgs;
 
     // Additional business logic validation
     this.validateBusinessRules(newsArgs);
 
     return newsArgs;
+  }
+
+  /**
+   * Normalize incoming args for news: fix key casing and value casing
+   */
+  private normalizeArgs(args: unknown): Record<string, unknown> {
+    if (!args || typeof args !== 'object') return {} as any;
+    const src = args as Record<string, unknown>;
+    const out: Record<string, unknown> = { ...src };
+
+    const map: Record<string, string> = {
+      Q: 'q',
+      Language: 'language',
+      Country: 'country',
+      Page: 'page',
+      TimeRange: 'timeRange',
+      Service: 'service'
+    };
+
+    for (const [from, to] of Object.entries(map)) {
+      if (out[from] !== undefined && out[to] === undefined) {
+        out[to] = out[from];
+      }
+    }
+
+    if (typeof out.language === 'string') out.language = (out.language as string).toLowerCase();
+    if (typeof out.country === 'string') out.country = (out.country as string).toLowerCase();
+
+    return out;
   }
 
   /**
@@ -241,6 +280,10 @@ export class NewsToolHandler {
       }
     } else if (error instanceof Error) {
       message = `News Search Error: ${error.message}`;
+      const lower = error.message.toLowerCase();
+      if (lower.includes('network')) {
+        message += ' (network error)';
+      }
     }
 
     return {

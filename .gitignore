@@ -8,6 +8,7 @@ yarn-error.log*
 dist/
 build/
 *.tsbuildinfo
+.tsbuildinfo
 
 # Environment variables
 .env
@@ -15,6 +16,9 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
+# Keep example files
+!.env.example
+!examples/**/.env.example
 
 # IDE files
 .vscode/
@@ -64,9 +68,16 @@ temp/
 .kiro/
 .vscode/settings.json
 .idea/
+.iflow/
 
 # Temporary files
 DEPLOYMENT-STATUS.md
 DEPLOYMENT.md
 USAGE.md
 start-server.*
+
+# Test result files
+api-int.json
+jest-*.json
+test-results/
+*.test-results.json

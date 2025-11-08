@@ -58,7 +58,7 @@ function showVersion(): void {
  */
 function parseArgs(): { help: boolean; version: boolean; config?: string } {
   const args = process.argv.slice(2);
-  const result = { help: false, version: false, config: undefined as string | undefined };
+  const result: { help: boolean; version: boolean; config?: string } = { help: false, version: false };
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -74,7 +74,10 @@ function parseArgs(): { help: boolean; version: boolean; config?: string } {
         break;
       case '--config':
       case '-c':
-        result.config = args[i + 1];
+        const configValue = args[i + 1];
+        if (configValue) {
+          result.config = configValue;
+        }
         i++; // Skip next argument as it's the config value
         break;
       default:

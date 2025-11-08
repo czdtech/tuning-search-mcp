@@ -155,7 +155,7 @@ export class HealthCheckService {
   stop(): void {
     if (this.checkInterval) {
       clearInterval(this.checkInterval);
-      this.checkInterval = undefined;
+      (this.checkInterval as any) = undefined;
       logInfo('Health check service stopped');
     }
   }

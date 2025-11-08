@@ -22,7 +22,7 @@ describe('ResultFormatter', () => {
       const customConfig = { maxContentLength: 500 };
       const customFormatter = new ResultFormatter(customConfig);
       const config = customFormatter.getConfig();
-      
+
       expect(config.maxContentLength).toBe(500);
       expect(config.includeMetadata).toBe(DEFAULT_FORMATTER_CONFIG.includeMetadata);
     });
@@ -63,9 +63,10 @@ describe('ResultFormatter', () => {
 
       expect(result.isError).toBe(false);
       expect(result.content).toHaveLength(1);
-      expect(result.content[0].type).toBe('text');
-      
-      const text = result.content[0].text;
+      expect(result.content[0]).toBeDefined();
+      expect(result.content[0]!.type).toBe('text');
+
+      const text = result.content[0]!.text;
       expect(text).toContain('Test Result 1');
       expect(text).toContain('Test Result 2');
       expect(text).toContain('https://example.com/page1');
@@ -82,7 +83,7 @@ describe('ResultFormatter', () => {
       };
 
       const result = formatter.formatSearchResponse(mockSearchResponse, undefined, 'desc', filters);
-      const text = result.content[0].text;
+      const text = result.content[0]!.text;
 
       expect(text).toContain('Test Result 1');
       expect(text).not.toContain('Test Result 2');
@@ -95,7 +96,7 @@ describe('ResultFormatter', () => {
       };
 
       const result = formatter.formatSearchResponse(mockSearchResponse, undefined, 'desc', filters);
-      const text = result.content[0].text;
+      const text = result.content[0]!.text;
 
       // Both results should pass the filter as they have content > 50 chars
       expect(text).toContain('Test Result 1');
@@ -108,7 +109,7 @@ describe('ResultFormatter', () => {
       };
 
       const result = formatter.formatSearchResponse(mockSearchResponse, undefined, 'desc', filters);
-      const text = result.content[0].text;
+      const text = result.content[0]!.text;
 
       expect(text).toContain('Test Result 1');
       expect(text).not.toContain('Test Result 2');
@@ -116,13 +117,13 @@ describe('ResultFormatter', () => {
 
     it('should sort by relevance', () => {
       const result = formatter.formatSearchResponse(mockSearchResponse, 'relevance', 'desc');
-      const text = result.content[0].text;
+      const text = result.content[0]!.text;
 
       // Results should be ordered by quality score
       // Result 1 has sitelinks which should give it a higher quality score
       expect(text).toContain('Test Result 1');
       expect(text).toContain('Test Result 2');
-      
+
       // Check that results are present (exact order may vary based on quality calculation)
       const hasResult1 = text.includes('Test Result 1');
       const hasResult2 = text.includes('Test Result 2');
@@ -132,7 +133,7 @@ describe('ResultFormatter', () => {
 
     it('should sort by title', () => {
       const result = formatter.formatSearchResponse(mockSearchResponse, 'title', 'asc');
-      const text = result.content[0].text;
+      const text = result.content[0]!.text;
 
       // Results should be ordered alphabetically by title
       const result1Index = text.indexOf('Test Result 1');
@@ -143,7 +144,7 @@ describe('ResultFormatter', () => {
     it('should limit results based on maxResults config', () => {
       const limitedFormatter = new ResultFormatter({ maxResults: 1 });
       const result = limitedFormatter.formatSearchResponse(mockSearchResponse);
-      const text = result.content[0].text;
+      const text = result.content[0]!.text;
 
       expect(text).toContain('Test Result 1');
       expect(text).not.toContain('Test Result 2');
@@ -155,7 +156,7 @@ describe('ResultFormatter', () => {
       const result = formatter.formatSearchResponse(invalidResponse);
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('Error formatting search results');
+      expect(result.content[0]!.text).toContain('Error formatting search results');
     });
   });
 
@@ -195,8 +196,8 @@ describe('ResultFormatter', () => {
       const result = formatter.formatNewsResponse(mockNewsResponse);
 
       expect(result.isError).toBe(false);
-      const text = result.content[0].text;
-      
+      const text = result.content[0]!.text;
+
       expect(text).toContain('Breaking News 1');
       expect(text).toContain('Breaking News 2');
       expect(text).toContain('Source: News Source 1');
@@ -208,12 +209,12 @@ describe('ResultFormatter', () => {
 
     it('should sort news by date', () => {
       const result = formatter.formatNewsResponse(mockNewsResponse, 'date', 'desc');
-      const text = result.content[0].text;
+      const text = result.content[0]!.text;
 
       // Both news items should be present
       expect(text).toContain('Breaking News 1');
       expect(text).toContain('Breaking News 2');
-      
+
       // More recent news (2024-01-15) should come first when sorted by date desc
       const hasNews1 = text.includes('Breaking News 1');
       const hasNews2 = text.includes('Breaking News 2');
@@ -230,7 +231,7 @@ describe('ResultFormatter', () => {
       };
 
       const result = formatter.formatNewsResponse(mockNewsResponse, undefined, 'desc', filters);
-      const text = result.content[0].text;
+      const text = result.content[0]!.text;
 
       expect(text).toContain('Breaking News 1');
       expect(text).not.toContain('Breaking News 2');
@@ -266,8 +267,8 @@ describe('ResultFormatter', () => {
       const result = formatter.formatCrawlResponse(mockCrawlResponse);
 
       expect(result.isError).toBe(false);
-      const text = result.content[0].text;
-      
+      const text = result.content[0]!.text;
+
       expect(text).toContain('Example Page Title');
       expect(text).toContain('This is the crawled content');
       expect(text).toContain('Domain: example.com');
@@ -290,7 +291,7 @@ describe('ResultFormatter', () => {
       };
 
       const result = formatter.formatCrawlResponse(responseWithoutMetadata);
-      const text = result.content[0].text;
+      const text = result.content[0]!.text;
 
       expect(text).toContain('Example Page Title');
       expect(text).toContain('Domain: example.com');
@@ -301,7 +302,7 @@ describe('ResultFormatter', () => {
   describe('configuration management', () => {
     it('should update configuration', () => {
       const newConfig = { maxContentLength: 1000, includeMetadata: false };
-      
+
       formatter.updateConfig(newConfig);
       const config = formatter.getConfig();
 
@@ -313,7 +314,7 @@ describe('ResultFormatter', () => {
 
   describe('content truncation', () => {
     it('should truncate long content', () => {
-      const longContentFormatter = new ResultFormatter({ 
+      const longContentFormatter = new ResultFormatter({
         maxContentLength: 50,
         truncationStrategy: 'character'
       });
@@ -334,13 +335,13 @@ describe('ResultFormatter', () => {
       };
 
       const result = longContentFormatter.formatSearchResponse(longContentResponse);
-      const text = result.content[0].text;
+      const text = result.content[0]!.text;
 
       expect(text).toContain('This is a very long content that should be truncat...');
     });
 
     it('should truncate by sentence', () => {
-      const sentenceFormatter = new ResultFormatter({ 
+      const sentenceFormatter = new ResultFormatter({
         maxContentLength: 100,
         truncationStrategy: 'sentence'
       });
@@ -361,7 +362,7 @@ describe('ResultFormatter', () => {
       };
 
       const result = sentenceFormatter.formatSearchResponse(response);
-      const text = result.content[0].text;
+      const text = result.content[0]!.text;
 
       expect(text).toContain('First sentence is short.');
       expect(text).not.toContain('Second sentence is much longer');
@@ -386,7 +387,7 @@ describe('ResultFormatter', () => {
       };
 
       const result = formatter.formatSearchResponse(response);
-      const text = result.content[0].text;
+      const text = result.content[0]!.text;
 
       expect(text).toContain('Domain: subdomain.example.com');
     });
@@ -411,7 +412,7 @@ describe('ResultFormatter', () => {
       };
 
       const result = formatter.formatSearchResponse(response);
-      const text = result.content[0].text;
+      const text = result.content[0]!.text;
 
       // Should have a decent quality score due to good title, content, clean URL, and sitelinks
       expect(text).toMatch(/Quality: \d+\/100/);
@@ -435,7 +436,7 @@ describe('ResultFormatter', () => {
       };
 
       const result = formatter.formatSearchResponse(response);
-      const text = result.content[0].text;
+      const text = result.content[0]!.text;
 
       // Should estimate ~2 minutes for 400 words (200 words per minute)
       expect(text).toContain('Reading time: 2 min');

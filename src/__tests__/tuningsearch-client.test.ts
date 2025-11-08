@@ -7,13 +7,13 @@ import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { TuningSearchClient } from '../clients/tuningsearch-client';
 import { TuningSearchConfig } from '../types/config-types';
-import { 
-  APIKeyError, 
-  ValidationError, 
-  NetworkError, 
-  TimeoutError, 
+import {
+  APIKeyError,
+  ValidationError,
+  NetworkError,
+  TimeoutError,
   RateLimitError,
-  ServerError 
+  ServerError
 } from '../types/error-types';
 import { SearchResponse, NewsResponse, CrawlResponse } from '../types/api-responses';
 
@@ -104,7 +104,7 @@ describe('TuningSearchClient', () => {
   describe('Constructor', () => {
     it('should create client with valid config', () => {
       const client = new TuningSearchClient(mockConfig);
-      
+
       expect(client.getBaseUrl()).toBe(mockConfig.baseUrl);
       expect(client.getHeaders()).toMatchObject({
         'Content-Type': 'application/json',
@@ -115,14 +115,14 @@ describe('TuningSearchClient', () => {
 
     it('should throw APIKeyError when API key is missing', () => {
       const configWithoutKey = { ...mockConfig, apiKey: undefined };
-      
+
       expect(() => new TuningSearchClient(configWithoutKey)).toThrow(APIKeyError);
     });
 
     it('should use default values for optional config', () => {
       const minimalConfig = { apiKey: 'test-key' };
       const client = new TuningSearchClient(minimalConfig);
-      
+
       expect(client.getBaseUrl()).toBe('https://api.tuningsearch.com/v1');
       expect(client.getRetryConfig().maxAttempts).toBe(3);
     });
@@ -138,10 +138,10 @@ describe('TuningSearchClient', () => {
     it('should validate search parameters', async () => {
       // Test empty query
       await expect(client.search({ q: '' })).rejects.toThrow(ValidationError);
-      
+
       // Test invalid page number
       await expect(client.search({ q: 'test', page: 0 })).rejects.toThrow(ValidationError);
-      
+
       // Test invalid safe parameter
       await expect(client.search({ q: 'test', safe: 5 })).rejects.toThrow(ValidationError);
     });
@@ -149,7 +149,7 @@ describe('TuningSearchClient', () => {
     it('should validate news search parameters', async () => {
       // Test empty query
       await expect(client.searchNews({ q: '' })).rejects.toThrow(ValidationError);
-      
+
       // Test invalid page number
       await expect(client.searchNews({ q: 'test', page: -1 })).rejects.toThrow(ValidationError);
     });
@@ -157,10 +157,10 @@ describe('TuningSearchClient', () => {
     it('should validate crawl parameters', async () => {
       // Test empty URL
       await expect(client.crawl({ url: '' })).rejects.toThrow(ValidationError);
-      
+
       // Test invalid URL
       await expect(client.crawl({ url: 'not-a-url' })).rejects.toThrow(ValidationError);
-      
+
       // Test non-HTTP protocol
       await expect(client.crawl({ url: 'ftp://example.com' })).rejects.toThrow(ValidationError);
     });
@@ -179,7 +179,7 @@ describe('TuningSearchClient', () => {
 
     it('should include proper headers', () => {
       const headers = client.getHeaders();
-      
+
       expect(headers['Content-Type']).toBe('application/json');
       expect(headers['Authorization']).toBe('Bearer test-api-key');
       expect(headers['User-Agent']).toBe('TuningSearch-MCP-Server/1.0.0');
@@ -189,7 +189,7 @@ describe('TuningSearchClient', () => {
       // Test the buildUrl method directly by accessing it through a test method
       const testClient = client as any;
       const url = testClient.buildUrl('/search', { q: 'test query', page: 1 });
-      
+
       // The expected URL should match the baseUrl from mockConfig
       expect(url).toBe('https://api.tuningsearch.com/v1/search?q=test+query&page=1');
     });
@@ -201,7 +201,7 @@ describe('TuningSearchClient', () => {
     it('should use custom retry config', () => {
       const client = new TuningSearchClient(mockConfig);
       const retryConfig = client.getRetryConfig();
-      
+
       expect(retryConfig.maxAttempts).toBe(2);
       expect(retryConfig.initialDelay).toBe(100); // Updated to match the reduced delay for tests
       expect(retryConfig.backoffFactor).toBe(2);
@@ -210,7 +210,7 @@ describe('TuningSearchClient', () => {
     it('should include retryable error codes', () => {
       const client = new TuningSearchClient(mockConfig);
       const retryConfig = client.getRetryConfig();
-      
+
       expect(retryConfig.retryableErrors).toContain('NETWORK_ERROR');
       expect(retryConfig.retryableErrors).toContain('RATE_LIMIT_ERROR');
       expect(retryConfig.retryableErrors).toContain('TIMEOUT_ERROR');
@@ -257,7 +257,7 @@ describe('TuningSearchClient', () => {
     it('should accept valid safe parameter values', async () => {
       // These should not throw validation errors (though they will fail due to no mock)
       const validSafeValues = [0, 1, 2];
-      
+
       for (const safeValue of validSafeValues) {
         try {
           await client.search({ q: 'test', safe: safeValue });
@@ -313,7 +313,7 @@ describe('TuningSearchClient', () => {
 
     it('should accept valid time range values for news', async () => {
       const validTimeRanges = ['day', 'week', 'month', 'year'];
-      
+
       for (const timeRange of validTimeRanges) {
         try {
           await client.searchNews({ q: 'test news', timeRange });
@@ -364,7 +364,7 @@ describe('TuningSearchClient', () => {
 
     it('should handle crawl with service parameter', async () => {
       try {
-        await client.crawl({ 
+        await client.crawl({
           url: 'https://example.com',
           service: 'custom-crawler'
         });
@@ -422,7 +422,7 @@ describe('TuningSearchClient', () => {
         expect(result).toEqual(mockSearchResponse);
         expect(result.success).toBe(true);
         expect(result.data.results).toHaveLength(2);
-        expect(result.data.results[0].title).toBe('Test Result 1');
+        expect(result.data.results[0]!.title).toBe('Test Result 1');
       });
 
       it('should perform successful news search request', async () => {
@@ -437,7 +437,7 @@ describe('TuningSearchClient', () => {
         expect(result).toEqual(mockNewsResponse);
         expect(result.success).toBe(true);
         expect(result.data.results).toHaveLength(1);
-        expect(result.data.results[0].source).toBe('Test News Source');
+        expect(result.data.results[0]!.source).toBe('Test News Source');
       });
 
       it('should perform successful crawl request', async () => {
@@ -481,7 +481,7 @@ describe('TuningSearchClient', () => {
           })
         );
 
-        await client.search({ 
+        await client.search({
           q: 'test query',
           language: 'zh',
           country: 'cn',
@@ -654,8 +654,8 @@ describe('TuningSearchClient', () => {
         expect(timestamps).toHaveLength(2);
 
         // Check that delay exists (allowing for some timing variance)
-        const delay1 = timestamps[1] - timestamps[0];
-        
+        const delay1 = timestamps[1]! - timestamps[0]!;
+
         expect(delay1).toBeGreaterThanOrEqual(90); // ~100ms with some tolerance
       });
 
@@ -690,7 +690,7 @@ describe('TuningSearchClient', () => {
           })
         );
 
-        await client.search({ 
+        await client.search({
           q: 'test',
           language: 'zh',
           country: undefined,

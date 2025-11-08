@@ -1,13 +1,13 @@
 /**
  * Result Formatter Service
- * 
+ *
  * This service provides advanced result formatting, metadata extraction,
  * and result processing capabilities for search results.
  */
 
-import { 
-  SearchResponse, 
-  NewsResponse, 
+import {
+  SearchResponse,
+  NewsResponse,
   CrawlResponse,
   SearchResult,
   NewsResult,
@@ -48,7 +48,7 @@ export const DEFAULT_FORMATTER_CONFIG: ResultFormatterConfig = {
   dateFormat: 'relative',
   truncationStrategy: 'sentence',
   highlightKeywords: false,
-  maxResults: 10
+  maxResults: 50
 };
 
 /**
@@ -150,11 +150,12 @@ export class ResultFormatter {
     response: SearchResponse,
     sortBy?: SortOption,
     sortDirection: SortDirection = 'desc',
-    filters?: FilterOptions
+    filters?: FilterOptions,
+    originalQuery?: string
   ): ToolResponse {
     try {
       // Enhance results with metadata
-      let enhancedResults = response.data.results.map(result => 
+      let enhancedResults = response.data.results.map(result =>
         this.enhanceSearchResult(result)
       );
 
@@ -172,21 +173,21 @@ export class ResultFormatter {
       enhancedResults = enhancedResults.slice(0, this.config.maxResults);
 
       // Format results
-      const formattedResults = enhancedResults.map((result, index) => 
+      const formattedResults = enhancedResults.map((result, index) =>
         this.formatSearchResult(result, index)
       ).join('\n\n');
 
       // Add metadata and suggestions
-      const suggestions = response.data.suggestions?.length 
-        ? `\n\nSuggested searches: ${response.data.suggestions.join(', ')}` 
+      const suggestions = response.data.suggestions?.length
+        ? `\n\nSuggested searches: ${response.data.suggestions.join(', ')}`
         : '';
 
-      const metadata = this.formatSearchMetadata(response, enhancedResults.length);
+      const metadata = this.formatSearchMetadata(response, enhancedResults.length, originalQuery);
 
       return {
         content: [{
           type: 'text',
-          text: formattedResults + suggestions + metadata
+          text: (formattedResults || '') + (enhancedResults.length === 0 && (response as any).message ? `\n${(response as any).message}` : '') + suggestions + metadata
         }],
         isError: !response.success
       };
@@ -212,7 +213,7 @@ export class ResultFormatter {
   ): ToolResponse {
     try {
       // Enhance results with metadata
-      let enhancedResults = response.data.results.map(result => 
+      let enhancedResults = response.data.results.map(result =>
         this.enhanceNewsResult(result)
       );
 
@@ -230,7 +231,7 @@ export class ResultFormatter {
       enhancedResults = enhancedResults.slice(0, this.config.maxResults);
 
       // Format results
-      const formattedResults = enhancedResults.map((result, index) => 
+      const formattedResults = enhancedResults.map((result, index) =>
         this.formatNewsResult(result, index)
       ).join('\n\n');
 
@@ -311,22 +312,27 @@ export class ResultFormatter {
     const readingTime = this.estimateReadingTime(result.content);
     const relativeTime = result.publishedDate ? this.formatRelativeTime(result.publishedDate) : undefined;
 
-    return {
+    const enhanced: EnhancedNewsResult = {
       ...result,
       domain,
       summary,
       keywords,
       qualityScore,
-      readingTime,
-      relativeTime
+      readingTime
     };
+    
+    if (relativeTime !== undefined) {
+      enhanced.relativeTime = relativeTime;
+    }
+    
+    return enhanced;
   }
 
   /**
    * Enhance crawl result with extracted metadata
    */
   private enhanceCrawlResult(result: CrawlResult): EnhancedCrawlResult {
-    const domain = 'unknown'; // URL not provided in crawl result
+    const domain = result.url ? this.extractDomain(result.url) : 'unknown';
     const summary = this.generateSummary(result.content);
     const keywords = this.extractKeywords(result.content);
     const qualityScore = this.calculateCrawlQualityScore(result);
@@ -362,7 +368,7 @@ export class ResultFormatter {
   private generateSummary(content: string): string {
     const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 0);
     if (sentences.length === 0) return content.substring(0, 100);
-    
+
     // Return first sentence or first 100 characters, whichever is shorter
     const firstSentence = sentences[0]?.trim() ?? '';
     return firstSentence.length > 100 ? firstSentence.substring(0, 100) + '...' : firstSentence;
@@ -401,25 +407,25 @@ export class ResultFormatter {
    */
   private calculateQualityScore(result: SearchResult): number {
     let score = 0;
-    
+
     // Title quality (0-30 points)
     if (result.title.length > 10 && result.title.length < 100) score += 20;
     if (result.title.includes(' ')) score += 10;
-    
+
     // Content quality (0-40 points)
     if (result.content.length > 100) score += 20;
     if (result.content.length > 300) score += 10;
     if (result.content.includes('.')) score += 10;
-    
+
     // URL quality (0-20 points)
     const domain = this.extractDomain(result.url);
     if (domain !== 'unknown') score += 10;
     if (!result.url.includes('?')) score += 5; // Clean URLs
     if (result.url.startsWith('https://')) score += 5;
-    
+
     // Sitelinks bonus (0-10 points)
     if (result.sitelinks && result.sitelinks.length > 0) score += 10;
-    
+
     return Math.min(score, 100);
   }
 
@@ -428,13 +434,13 @@ export class ResultFormatter {
    */
   private calculateNewsQualityScore(result: NewsResult): number {
     let score = this.calculateQualityScore(result);
-    
+
     // News-specific scoring
     if (result.source) score += 10;
     if (result.publishedDate) score += 10;
     if (result.imageUrl) score += 5;
     if (result.category) score += 5;
-    
+
     return Math.min(score, 100);
   }
 
@@ -443,15 +449,15 @@ export class ResultFormatter {
    */
   private calculateCrawlQualityScore(result: CrawlResult): number {
     let score = 0;
-    
+
     // Content quality (only field available in CrawlResult)
     if (result.content.length > 500) score += 30;
     if (result.content.length > 1000) score += 20;
     if (result.content.length > 2000) score += 10;
-    
+
     // Technical quality
     // Status code not available in simplified CrawlResult
-    
+
     return Math.min(score, 100);
   }
 
@@ -479,8 +485,9 @@ export class ResultFormatter {
       if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
       if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
       if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
-      
-      return date.toLocaleDateString();
+
+      // Use ISO-like YYYY-MM-DD to keep tests stable and locale-agnostic
+      return date.toISOString().slice(0, 10);
     } catch {
       return dateString;
     }
@@ -538,30 +545,30 @@ export class ResultFormatter {
       // Domain filtering
       if (filters.domains && !filters.domains.includes(result.domain)) return false;
       if (filters.excludeDomains && filters.excludeDomains.includes(result.domain)) return false;
-      
+
       // Content length filtering
       if (filters.contentLength) {
         if (filters.contentLength.min && result.content.length < filters.contentLength.min) return false;
         if (filters.contentLength.max && result.content.length > filters.contentLength.max) return false;
       }
-      
+
       // Keyword filtering
       if (filters.keywords) {
-        const hasKeywords = filters.keywords.some(keyword => 
+        const hasKeywords = filters.keywords.some(keyword =>
           result.content.toLowerCase().includes(keyword.toLowerCase()) ||
           result.title.toLowerCase().includes(keyword.toLowerCase())
         );
         if (!hasKeywords) return false;
       }
-      
+
       if (filters.excludeKeywords) {
-        const hasExcludedKeywords = filters.excludeKeywords.some(keyword => 
+        const hasExcludedKeywords = filters.excludeKeywords.some(keyword =>
           result.content.toLowerCase().includes(keyword.toLowerCase()) ||
           result.title.toLowerCase().includes(keyword.toLowerCase())
         );
         if (hasExcludedKeywords) return false;
       }
-      
+
       return true;
     });
   }
@@ -571,14 +578,14 @@ export class ResultFormatter {
       // Apply base filtering
       const baseFiltered = this.filterSearchResults([result as any], filters);
       if (baseFiltered.length === 0) return false;
-      
+
       // Date range filtering
       if (filters.dateRange && result.publishedDate) {
         const publishedDate = new Date(result.publishedDate);
         if (filters.dateRange.start && publishedDate < filters.dateRange.start) return false;
         if (filters.dateRange.end && publishedDate > filters.dateRange.end) return false;
       }
-      
+
       return true;
     });
   }
@@ -587,7 +594,7 @@ export class ResultFormatter {
   private sortSearchResults(results: EnhancedSearchResult[], sortBy: SortOption, direction: SortDirection): EnhancedSearchResult[] {
     const sorted = [...results].sort((a, b) => {
       let comparison = 0;
-      
+
       switch (sortBy) {
         case 'relevance':
           comparison = b.qualityScore - a.qualityScore;
@@ -601,17 +608,17 @@ export class ResultFormatter {
         default:
           comparison = a.position - b.position;
       }
-      
+
       return direction === 'asc' ? comparison : -comparison;
     });
-    
+
     return sorted;
   }
 
   private sortNewsResults(results: EnhancedNewsResult[], sortBy: SortOption, direction: SortDirection): EnhancedNewsResult[] {
     const sorted = [...results].sort((a, b) => {
       let comparison = 0;
-      
+
       switch (sortBy) {
         case 'date': {
           const dateA = a.publishedDate ? new Date(a.publishedDate).getTime() : 0;
@@ -625,10 +632,10 @@ export class ResultFormatter {
         default:
           return this.sortSearchResults(results as any, sortBy, direction) as any;
       }
-      
+
       return direction === 'asc' ? comparison : -comparison;
     });
-    
+
     return sorted;
   }
 
@@ -638,22 +645,22 @@ export class ResultFormatter {
     const title = result.title;
     const url = result.url;
     const content = this.truncateContent(result.content, this.config.maxContentLength);
-    
+
     let formatted = `${position}${title}\n   ${url}\n   ${content}`;
-    
+
     if (this.config.includeMetadata) {
       const metadata: string[] = [];
       metadata.push(`Domain: ${result.domain}`);
       metadata.push(`Quality: ${result.qualityScore}/100`);
       metadata.push(`Reading time: ${result.readingTime} min`);
-      
+
       if (result.keywords.length > 0) {
         metadata.push(`Keywords: ${result.keywords.join(', ')}`);
       }
-      
+
       formatted += `\n   ${metadata.join(' | ')}`;
     }
-    
+
     return formatted;
   }
 
@@ -662,82 +669,108 @@ export class ResultFormatter {
     const title = result.title;
     const url = result.url;
     const content = this.truncateContent(result.content, this.config.maxContentLength);
-    
+
     const sourceInfo: string[] = [];
     if (result.source) sourceInfo.push(`Source: ${result.source}`);
     if (result.relativeTime) sourceInfo.push(`${result.relativeTime}`);
-    
+
     let formatted = `${position}${title}\n   ${url}`;
     if (sourceInfo.length > 0) {
       formatted += `\n   ${sourceInfo.join(' | ')}`;
     }
     formatted += `\n   ${content}`;
-    
+
     if (this.config.includeMetadata) {
       const metadata: string[] = [];
       metadata.push(`Domain: ${result.domain}`);
       metadata.push(`Quality: ${result.qualityScore}/100`);
       metadata.push(`Reading time: ${result.readingTime} min`);
-      
+
       formatted += `\n   ${metadata.join(' | ')}`;
     }
-    
+
     return formatted;
   }
 
   private formatCrawlResult(result: EnhancedCrawlResult): string {
-    const title = 'Crawled Content'; // Title not available in simplified CrawlResult
+    const title = result.title || 'Crawled Content'; // Use title from result if available
     const content = this.truncateContent(result.content, this.config.maxContentLength * 2); // Allow more content for crawl results
-    
+
     let formatted = `${title}\n\n${content}`;
-    
+
     if (this.config.includeMetadata) {
       const metadata: string[] = [];
-      
+
       // Enhanced metadata from processing
       if (result.domain) metadata.push(`Domain: ${result.domain}`);
       if (result.summary) metadata.push(`Summary: ${result.summary}`);
       if (result.keywords && result.keywords.length > 0) {
         metadata.push(`Keywords: ${result.keywords.join(', ')}`);
       }
-      
+      if (result.qualityScore !== undefined) {
+        metadata.push(`Quality: ${result.qualityScore.toFixed(1)}/10`);
+      }
+      if (result.readingTime) {
+        metadata.push(`Reading time: ${result.readingTime} minutes`);
+      }
+      if (result.structure) {
+        const s = result.structure;
+        metadata.push(`Structure: headings=${s.headings}, paragraphs=${s.paragraphs}, links=${s.links}, images=${s.images}`);
+      }
+
       if (metadata.length > 0) {
         formatted += `\n\nMetadata:\n${metadata.join('\n')}`;
       }
+
+      // Add page metadata if available
+      if (result.metadata) {
+        const pageMetadata: string[] = [];
+        if (result.metadata.author) pageMetadata.push(`author: ${result.metadata.author}`);
+        if (result.metadata.description) pageMetadata.push(`description: ${result.metadata.description}`);
+        if (result.metadata.publishedDate) pageMetadata.push(`published: ${result.metadata.publishedDate}`);
+        if (result.metadata.language) pageMetadata.push(`language: ${result.metadata.language}`);
+        if ((result.metadata as any).readingTime) pageMetadata.push(`readingTime: ${(result.metadata as any).readingTime}`);
+
+        if (pageMetadata.length > 0) {
+          formatted += `\n\nPage Metadata:\n${pageMetadata.join('\n')}`;
+        }
+      }
     }
-    
+
     return formatted;
   }
 
-  private formatSearchMetadata(response: SearchResponse, resultCount: number): string {
+  private formatSearchMetadata(response: SearchResponse, resultCount: number, originalQuery?: string): string {
     const metadata: string[] = [];
-    
-    metadata.push(`\nFound ${resultCount} results for "${response.data.query}"`);
-    
+
+    const query = originalQuery || (response.data as any)?.query || 'search';
+    metadata.push(`\nFound ${resultCount} results for "${query}"`);
+
     if (response.data.totalResults) {
       metadata.push(`Total available: ${response.data.totalResults}`);
     }
-    
+
     if (response.data.searchTime) {
       metadata.push(`Search time: ${response.data.searchTime}ms`);
     }
-    
+
     return metadata.join(' | ');
   }
 
   private formatNewsMetadata(response: NewsResponse, resultCount: number): string {
     const metadata: string[] = [];
-    
-    metadata.push(`\nFound ${resultCount} news results for "${response.data.query}"`);
-    
+
+    const query = response.data.query || 'news search';
+    metadata.push(`\nFound ${resultCount} news results for "${query}"`);
+
     if (response.data.totalResults) {
       metadata.push(`Total available: ${response.data.totalResults}`);
     }
-    
+
     if (response.data.searchTime) {
       metadata.push(`Search time: ${response.data.searchTime}ms`);
     }
-    
+
     return metadata.join(' | ');
   }
 

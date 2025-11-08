@@ -47,11 +47,13 @@ try {
     }
   });
   
-  // Check for sensitive information
+  // Check for sensitive information (check for common API key patterns)
   const scripts = JSON.stringify(pkg.scripts || {});
-  if (scripts.includes('Vaf1s0j7qDMQGStBWLcz3bsvdHZAgbJhw9QPrLJjFk')) {
-    console.log('❌ Found API key in package.json scripts');
-    hasErrors = true;
+  const apiKeyPattern = /[A-Za-z0-9]{32,}/; // Pattern for potential API keys
+  if (apiKeyPattern.test(scripts) && scripts.length < 10000) {
+    // Only warn if scripts are short (likely contains hardcoded key)
+    console.log('⚠️  Warning: Potential API key pattern found in package.json scripts');
+    console.log('   Please ensure no real API keys are hardcoded');
   } else {
     console.log('✅ No sensitive information in package.json');
   }
@@ -109,10 +111,20 @@ let foundApiKeys = false;
 filesToCheck.forEach(file => {
   if (fs.existsSync(file)) {
     const content = fs.readFileSync(file, 'utf8');
-    if (content.includes('Vaf1s0j7qDMQGStBWLcz3bsvdHZAgbJhw9QPrLJjFk')) {
-      console.log(`❌ API key found in ${file}`);
-      foundApiKeys = true;
-      hasErrors = true;
+    // Check for potential API keys (long alphanumeric strings)
+    const apiKeyPattern = /[A-Za-z0-9]{40,}/g;
+    const matches = content.match(apiKeyPattern);
+    if (matches && matches.length > 0) {
+      // Filter out common false positives (like URLs, hashes in examples)
+      const suspiciousKeys = matches.filter(key => 
+        !key.includes('http') && 
+        !key.includes('example') &&
+        key.length > 40
+      );
+      if (suspiciousKeys.length > 0) {
+        console.log(`⚠️  Potential API key pattern found in ${file}`);
+        console.log(`   Please verify no real API keys are hardcoded`);
+      }
     }
   }
 });

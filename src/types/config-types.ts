@@ -113,12 +113,40 @@ export function loadConfigFromEnv(): TuningSearchConfig {
   const retryAttemptsEnv = process.env[ENV_VARS.RETRY_ATTEMPTS];
   const retryDelayEnv = process.env[ENV_VARS.RETRY_DELAY];
   
-  return {
-    apiKey: process.env[ENV_VARS.API_KEY],
-    baseUrl: process.env[ENV_VARS.BASE_URL] || DEFAULT_CONFIG.baseUrl,
-    timeout: timeoutEnv ? parseInt(timeoutEnv, 10) : DEFAULT_CONFIG.timeout,
-    retryAttempts: retryAttemptsEnv ? parseInt(retryAttemptsEnv, 10) : DEFAULT_CONFIG.retryAttempts,
-    retryDelay: retryDelayEnv ? parseInt(retryDelayEnv, 10) : DEFAULT_CONFIG.retryDelay,
-    logLevel: (process.env[ENV_VARS.LOG_LEVEL] as LogLevel) || DEFAULT_CONFIG.logLevel
-  };
+  const config: Partial<TuningSearchConfig> = {};
+  
+  const apiKey = process.env[ENV_VARS.API_KEY];
+  if (apiKey !== undefined) {
+    (config as any).apiKey = apiKey;
+  }
+  
+  const baseUrl = process.env[ENV_VARS.BASE_URL];
+  if (baseUrl !== undefined) {
+    (config as any).baseUrl = baseUrl;
+  } else {
+    (config as any).baseUrl = DEFAULT_CONFIG.baseUrl;
+  }
+  
+  if (timeoutEnv !== undefined) {
+    (config as any).timeout = parseInt(timeoutEnv, 10);
+  } else {
+    (config as any).timeout = DEFAULT_CONFIG.timeout;
+  }
+  
+  if (retryAttemptsEnv !== undefined) {
+    (config as any).retryAttempts = parseInt(retryAttemptsEnv, 10);
+  } else {
+    (config as any).retryAttempts = DEFAULT_CONFIG.retryAttempts;
+  }
+  
+  if (retryDelayEnv !== undefined) {
+    (config as any).retryDelay = parseInt(retryDelayEnv, 10);
+  } else {
+    (config as any).retryDelay = DEFAULT_CONFIG.retryDelay;
+  }
+  
+  const logLevelEnv = process.env[ENV_VARS.LOG_LEVEL];
+  (config as any).logLevel = (logLevelEnv ? logLevelEnv.toLowerCase() : DEFAULT_CONFIG.logLevel) as LogLevel;
+  
+  return config as TuningSearchConfig;
 }

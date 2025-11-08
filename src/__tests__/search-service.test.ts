@@ -45,8 +45,11 @@ describe('SearchService', () => {
       getConfig: jest.fn()
     } as any;
 
-    // Create search service
-    searchService = new SearchService(mockClient, {}, mockErrorHandler);
+    // Create search service with stricter config for validation tests
+    searchService = new SearchService(mockClient, {
+      maxQueryLength: 500,  // Stricter limit for validation tests
+      maxPage: 100           // Stricter limit for validation tests
+    }, mockErrorHandler);
   });
 
   afterEach(() => {
@@ -367,7 +370,9 @@ describe('SearchService', () => {
     });
 
     it('should get current configuration', () => {
-      const config = searchService.getConfig();
+      // Create a new service instance with default config for this test
+      const defaultService = new SearchService(mockClient, {}, mockErrorHandler);
+      const config = defaultService.getConfig();
       
       expect(config).toEqual(DEFAULT_SEARCH_SERVICE_CONFIG);
     });

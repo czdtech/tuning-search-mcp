@@ -71,20 +71,62 @@ export class SearchToolHandler {
    * Parse and validate search arguments
    */
   private parseAndValidateArgs(args: unknown): SearchToolArgs {
+    // Normalize common mixed-case or variant keys from external clients
+    const normalized = this.normalizeArgs(args);
+
+    // Explicit required-field check first for clearer error messaging
+    if (!normalized || typeof (normalized as any).q !== 'string' || ((normalized as any).q as string).trim().length === 0) {
+      throw new ValidationError(
+        'Invalid search arguments',
+        ['Search query (q) is required and cannot be empty']
+      );
+    }
+
     // Basic type validation
-    if (!validateSearchToolArgs(args)) {
+    if (!validateSearchToolArgs(normalized)) {
       throw new ValidationError(
         'Invalid search arguments',
         ['Arguments do not match expected SearchToolArgs schema']
       );
     }
 
-    const searchArgs = args as SearchToolArgs;
+    const searchArgs = normalized as SearchToolArgs;
 
     // Additional business logic validation
     this.validateBusinessRules(searchArgs);
 
     return searchArgs;
+  }
+
+  /**
+   * Normalize incoming args: fix key casing and value casing where appropriate
+   */
+  private normalizeArgs(args: unknown): Record<string, unknown> {
+    if (!args || typeof args !== 'object') return {} as any;
+    const src = args as Record<string, unknown>;
+    const out: Record<string, unknown> = { ...src };
+
+    const map: Record<string, string> = {
+      Q: 'q',
+      Language: 'language',
+      Country: 'country',
+      Page: 'page',
+      Safe: 'safe',
+      TimeRange: 'timeRange',
+      Service: 'service'
+    };
+
+    for (const [from, to] of Object.entries(map)) {
+      if (out[from] !== undefined && out[to] === undefined) {
+        out[to] = out[from];
+      }
+    }
+
+    // Normalize value casing for language/country
+    if (typeof out.language === 'string') out.language = (out.language as string).toLowerCase();
+    if (typeof out.country === 'string') out.country = (out.country as string).toLowerCase();
+
+    return out;
   }
 
   /**
@@ -145,6 +187,10 @@ export class SearchToolHandler {
       }
     } else if (error instanceof Error) {
       message = `Search Error: ${error.message}`;
+      const lower = error.message.toLowerCase();
+      if (lower.includes('network')) {
+        message += ' (network error)';
+      }
     }
 
     return {

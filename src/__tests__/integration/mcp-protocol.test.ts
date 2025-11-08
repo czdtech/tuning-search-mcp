@@ -20,7 +20,7 @@ const mockApiServer = setupServer(
   http.get('https://api.test.tuningsearch.com/v1/search', ({ request }) => {
     const url = new URL(request.url);
     const query = url.searchParams.get('q') || 'test query';
-    
+
     return HttpResponse.json({
       success: true,
       data: {
@@ -33,7 +33,7 @@ const mockApiServer = setupServer(
             position: 1
           },
           {
-            title: 'Test Result 2', 
+            title: 'Test Result 2',
             url: 'https://example.com/2',
             content: 'Test content 2',
             position: 2
@@ -50,7 +50,7 @@ const mockApiServer = setupServer(
   http.get('https://api.test.tuningsearch.com/v1/news', ({ request }) => {
     const url = new URL(request.url);
     const query = url.searchParams.get('q') || 'test news';
-    
+
     return HttpResponse.json({
       success: true,
       data: {
@@ -75,7 +75,7 @@ const mockApiServer = setupServer(
   http.get('https://api.test.tuningsearch.com/v1/crawl', ({ request }) => {
     const url = new URL(request.url);
     const targetUrl = url.searchParams.get('url') || 'https://example.com';
-    
+
     return HttpResponse.json({
       success: true,
       data: {
@@ -120,14 +120,14 @@ describe('MCP Protocol Integration Tests', () => {
 
   beforeEach(async () => {
     mockApiServer.resetHandlers();
-    
+
     // Initialize services directly
     configService = new ConfigService();
     await configService.initialize();
-    
+
     client = new TuningSearchClient(configService.getConfig());
     searchService = new SearchService(client);
-    
+
     // Initialize tool handlers
     searchToolHandler = new SearchToolHandler(searchService);
     newsToolHandler = new NewsToolHandler(searchService);
@@ -143,16 +143,16 @@ describe('MCP Protocol Integration Tests', () => {
       expect(searchToolHandler).toBeDefined();
       expect(newsToolHandler).toBeDefined();
       expect(crawlToolHandler).toBeDefined();
-      
+
       // Verify handlers have correct info
       const searchInfo = searchToolHandler.getHandlerInfo();
       expect(searchInfo.name).toBe('SearchToolHandler');
       expect(searchInfo.version).toBe('1.0.0');
-      
+
       const newsInfo = newsToolHandler.getHandlerInfo();
       expect(newsInfo.name).toBe('NewsToolHandler');
       expect(newsInfo.version).toBe('1.0.0');
-      
+
       const crawlInfo = crawlToolHandler.getHandlerInfo();
       expect(crawlInfo.name).toBe('CrawlToolHandler');
       expect(crawlInfo.version).toBe('1.0.0');
@@ -162,10 +162,10 @@ describe('MCP Protocol Integration Tests', () => {
       const searchInfo = searchToolHandler.getHandlerInfo();
       expect(searchInfo.supportedOperations).toContain('handleSearchRequest');
       expect(searchInfo.supportedOperations).toContain('handleEnhancedSearchRequest');
-      
+
       const newsInfo = newsToolHandler.getHandlerInfo();
       expect(newsInfo.supportedOperations).toContain('handleNewsRequest');
-      
+
       const crawlInfo = crawlToolHandler.getHandlerInfo();
       expect(crawlInfo.supportedOperations).toContain('handleCrawlRequest');
     });
@@ -182,12 +182,12 @@ describe('MCP Protocol Integration Tests', () => {
 
       // Simulate MCP tool call
       const result = await simulateToolCall('tuningsearch_search', searchArgs);
-      
+
       expect(result.isError).toBe(false);
       expect(result.content).toHaveLength(1);
-      expect(result.content[0].type).toBe('text');
-      
-      const responseText = result.content[0].text;
+      expect(result.content[0]!.type).toBe('text');
+
+      const responseText = result.content[0]!.text;
       expect(responseText).toContain('Test Result 1');
       expect(responseText).toContain('https://example.com/1');
       expect(responseText).toContain('Test content 1');
@@ -199,19 +199,19 @@ describe('MCP Protocol Integration Tests', () => {
       };
 
       const result = await simulateToolCall('tuningsearch_search', searchArgs);
-      
+
       expect(result.isError).toBe(false);
       expect(result.content).toHaveLength(1);
-      expect(result.content[0].type).toBe('text');
+      expect(result.content[0]!.type).toBe('text');
     });
 
     it('should validate required search parameters', async () => {
       const searchArgs = {}; // Missing required 'q' parameter
 
       const result = await simulateToolCall('tuningsearch_search', searchArgs);
-      
+
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('query');
+      expect(result.content[0]!.text).toContain('query');
     });
 
     it('should handle search API errors gracefully', async () => {
@@ -231,9 +231,9 @@ describe('MCP Protocol Integration Tests', () => {
       };
 
       const result = await simulateToolCall('tuningsearch_search', searchArgs);
-      
+
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('rate limit');
+      expect(result.content[0]!.text).toContain('rate limit');
     });
   });
 
@@ -246,11 +246,11 @@ describe('MCP Protocol Integration Tests', () => {
       };
 
       const result = await simulateToolCall('tuningsearch_news', newsArgs);
-      
+
       expect(result.isError).toBe(false);
       expect(result.content).toHaveLength(1);
-      
-      const responseText = result.content[0].text;
+
+      const responseText = result.content[0]!.text;
       expect(responseText).toContain('Test News 1');
       expect(responseText).toContain('Test News Source');
       expect(responseText).toContain('2024-01-01');
@@ -260,9 +260,9 @@ describe('MCP Protocol Integration Tests', () => {
       const newsArgs = {}; // Missing required 'q' parameter
 
       const result = await simulateToolCall('tuningsearch_news', newsArgs);
-      
+
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('query');
+      expect(result.content[0]!.text).toContain('query');
     });
   });
 
@@ -273,11 +273,11 @@ describe('MCP Protocol Integration Tests', () => {
       };
 
       const result = await simulateToolCall('tuningsearch_crawl', crawlArgs);
-      
+
       expect(result.isError).toBe(false);
       expect(result.content).toHaveLength(1);
-      
-      const responseText = result.content[0].text;
+
+      const responseText = result.content[0]!.text;
       expect(responseText).toContain('Test Page Title');
       expect(responseText).toContain('Test page content');
     });
@@ -286,9 +286,9 @@ describe('MCP Protocol Integration Tests', () => {
       const crawlArgs = {}; // Missing required 'url' parameter
 
       const result = await simulateToolCall('tuningsearch_crawl', crawlArgs);
-      
+
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('URL');
+      expect(result.content[0]!.text).toContain('URL');
     });
 
     it('should validate URL format', async () => {
@@ -297,18 +297,18 @@ describe('MCP Protocol Integration Tests', () => {
       };
 
       const result = await simulateToolCall('tuningsearch_crawl', crawlArgs);
-      
+
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('valid URL');
+      expect(result.content[0]!.text).toContain('valid URL');
     });
   });
 
   describe('Error Handling', () => {
     it('should handle unknown tool calls', async () => {
       const result = await simulateToolCall('unknown_tool', {});
-      
+
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('Unknown tool');
+      expect(result.content[0]!.text).toContain('Unknown tool');
     });
 
     it('should handle network errors', async () => {
@@ -324,9 +324,10 @@ describe('MCP Protocol Integration Tests', () => {
       };
 
       const result = await simulateToolCall('tuningsearch_search', searchArgs);
-      
+
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('network');
+      // Error message contains "Network error: Failed to fetch" (case-insensitive check)
+      expect(result.content[0]!.text.toLowerCase()).toContain('network');
     });
 
     it('should handle API authentication errors', async () => {
@@ -346,9 +347,9 @@ describe('MCP Protocol Integration Tests', () => {
       };
 
       const result = await simulateToolCall('tuningsearch_search', searchArgs);
-      
+
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('API key');
+      expect(result.content[0]!.text).toContain('API key');
     });
   });
 
@@ -359,20 +360,20 @@ describe('MCP Protocol Integration Tests', () => {
       };
 
       const result = await simulateToolCall('tuningsearch_search', searchArgs);
-      
+
       // Check MCP response format
       expect(result).toHaveProperty('content');
       expect(result).toHaveProperty('isError');
       expect(Array.isArray(result.content)).toBe(true);
       expect(result.content[0]).toHaveProperty('type');
       expect(result.content[0]).toHaveProperty('text');
-      expect(result.content[0].type).toBe('text');
-      expect(typeof result.content[0].text).toBe('string');
+      expect(result.content[0]!.type).toBe('text');
+      expect(typeof result.content[0]!.text).toBe('string');
     });
 
     it('should return MCP-compliant error responses', async () => {
       const result = await simulateToolCall('tuningsearch_search', {});
-      
+
       // Check MCP error response format
       expect(result).toHaveProperty('content');
       expect(result).toHaveProperty('isError');
@@ -380,8 +381,8 @@ describe('MCP Protocol Integration Tests', () => {
       expect(Array.isArray(result.content)).toBe(true);
       expect(result.content[0]).toHaveProperty('type');
       expect(result.content[0]).toHaveProperty('text');
-      expect(result.content[0].type).toBe('text');
-      expect(typeof result.content[0].text).toBe('string');
+      expect(result.content[0]!.type).toBe('text');
+      expect(typeof result.content[0]!.text).toBe('string');
     });
   });
 
@@ -392,12 +393,12 @@ describe('MCP Protocol Integration Tests', () => {
       };
 
       // Make multiple concurrent calls
-      const promises = Array(5).fill(null).map(() => 
+      const promises = Array(5).fill(null).map(() =>
         simulateToolCall('tuningsearch_search', searchArgs)
       );
 
       const results = await Promise.all(promises);
-      
+
       // All calls should succeed
       results.forEach(result => {
         expect(result.isError).toBe(false);
@@ -411,7 +412,7 @@ describe('MCP Protocol Integration Tests', () => {
       };
 
       await simulateToolCall('tuningsearch_search', searchArgs);
-      
+
       const metrics = searchService.getPerformanceMetrics();
       expect(metrics).toBeDefined();
       expect(Array.isArray(metrics)).toBe(true);
@@ -424,7 +425,7 @@ describe('MCP Protocol Integration Tests', () => {
       };
 
       await simulateToolCall('tuningsearch_search', searchArgs);
-      
+
       const stats = searchService.getStats();
       expect(stats.totalSearches).toBeGreaterThan(0);
     });

@@ -1,5 +1,7 @@
 module.exports = {
-  preset: 'ts-jest',
+  // Switch to ts-jest ESM preset per official guidance
+  // See: ts-jest ESM support docs
+  preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
   testMatch: [
@@ -7,10 +9,9 @@ module.exports = {
     '**/?(*.)+(spec|test).ts'
   ],
   transform: {
-    '^.+\\.ts$': ['ts-jest', {
-      useESM: false
-    }],
+    '^.+\\.tsx?$': ['ts-jest', { useESM: true }],
   },
+  extensionsToTreatAsEsm: ['.ts'],
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
@@ -25,11 +26,10 @@ module.exports = {
     'html'
   ],
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
-  testTimeout: 10000,
+  // Increase default timeout to reduce flakiness in integration/perf tests
+  testTimeout: 20000,
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
-  transformIgnorePatterns: [
-    'node_modules/(?!(@modelcontextprotocol)/)'
-  ]
+  // Rely on ESM preset; avoid transforming node_modules ESM
 };

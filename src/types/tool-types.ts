@@ -1,6 +1,6 @@
 /**
  * MCP Tool Types for TuningSearch
- * 
+ *
  * This file contains type definitions for MCP tool parameters and responses
  * including SearchToolArgs, NewsToolArgs, CrawlToolArgs and ToolResponse.
  */
@@ -86,8 +86,8 @@ export const SearchToolSchema = {
     country: { type: 'string', description: 'Country code (e.g., us, cn, uk)' },
     page: { type: 'number', description: 'Page number', default: 1 },
     safe: { type: 'number', description: 'Safe search level (0-2)', default: 0 },
-    timeRange: { 
-      type: 'string', 
+    timeRange: {
+      type: 'string',
       description: 'Time range for search results',
       enum: ['day', 'week', 'month', 'year']
     },
@@ -104,8 +104,8 @@ export const NewsToolSchema = {
     language: { type: 'string', description: 'Language code (e.g., en, zh, es)' },
     country: { type: 'string', description: 'Country code (e.g., us, cn, uk)' },
     page: { type: 'number', description: 'Page number', default: 1 },
-    timeRange: { 
-      type: 'string', 
+    timeRange: {
+      type: 'string',
       description: 'Time range for news results',
       enum: ['day', 'week', 'month', 'year']
     },
@@ -118,8 +118,8 @@ export const CrawlToolSchema = {
   type: 'object',
   required: ['url'],
   properties: {
-    url: { 
-      type: 'string', 
+    url: {
+      type: 'string',
       description: 'URL to crawl',
       format: 'uri'
     },
@@ -133,7 +133,7 @@ export const CrawlToolSchema = {
 export function validateSearchToolArgs(args: unknown): args is SearchToolArgs {
   if (!args || typeof args !== 'object') return false;
   const obj = args as any;
-  
+
   return typeof obj.q === 'string' && obj.q.trim() !== '' &&
          (obj.language === undefined || typeof obj.language === 'string') &&
          (obj.country === undefined || typeof obj.country === 'string') &&
@@ -146,7 +146,7 @@ export function validateSearchToolArgs(args: unknown): args is SearchToolArgs {
 export function validateNewsToolArgs(args: unknown): args is NewsToolArgs {
   if (!args || typeof args !== 'object') return false;
   const obj = args as any;
-  
+
   return typeof obj.q === 'string' && obj.q.trim() !== '' &&
          (obj.language === undefined || typeof obj.language === 'string') &&
          (obj.country === undefined || typeof obj.country === 'string') &&
@@ -158,7 +158,7 @@ export function validateNewsToolArgs(args: unknown): args is NewsToolArgs {
 export function validateCrawlToolArgs(args: unknown): args is CrawlToolArgs {
   if (!args || typeof args !== 'object') return false;
   const obj = args as any;
-  
+
   return typeof obj.url === 'string' && obj.url.trim() !== '' &&
          (obj.service === undefined || typeof obj.service === 'string');
 }
@@ -174,13 +174,13 @@ export class ToolResponseConverter {
     const results = response.data.results.map((result, index) => {
       return `${index + 1}. ${result.title}\n   ${result.url}\n   ${result.content}`;
     }).join('\n\n');
-    
-    const suggestions = response.data.suggestions?.length 
-      ? `\n\nSuggested searches: ${response.data.suggestions.join(', ')}` 
+
+    const suggestions = response.data.suggestions?.length
+      ? `\n\nSuggested searches: ${response.data.suggestions.join(', ')}`
       : '';
-    
-    const metadata = `\n\nFound ${response.data.results.length} results for "${response.data.query}"`;
-    
+
+    const metadata = `\n\nFound ${response.data.results.length} results`;
+
     return {
       content: [{
         type: 'text',
@@ -189,7 +189,7 @@ export class ToolResponseConverter {
       isError: !response.success
     };
   }
-  
+
   /**
    * Convert news response to MCP tool response
    */
@@ -198,12 +198,12 @@ export class ToolResponseConverter {
       const source = result.source ? `Source: ${result.source}` : '';
       const date = result.publishedDate ? `Date: ${result.publishedDate}` : '';
       const sourceInfo = [source, date].filter(Boolean).join(' | ');
-      
+
       return `${index + 1}. ${result.title}\n   ${result.url}\n   ${sourceInfo ? sourceInfo + '\n   ' : ''}${result.content}`;
     }).join('\n\n');
-    
+
     const metadata = `\n\nFound ${response.data.results.length} news results for "${response.data.query}"`;
-    
+
     return {
       content: [{
         type: 'text',
@@ -212,16 +212,16 @@ export class ToolResponseConverter {
       isError: !response.success
     };
   }
-  
+
   /**
    * Convert crawl response to MCP tool response
    */
   static fromCrawlResponse(response: CrawlResponse): ToolResponse {
     const result = response.data;
-    
+
     // Simplified CrawlResult only has content field
     const content = result.content;
-    
+
     return {
       content: [{
         type: 'text',
@@ -230,7 +230,7 @@ export class ToolResponseConverter {
       isError: !response.success
     };
   }
-  
+
   /**
    * Create error tool response
    */

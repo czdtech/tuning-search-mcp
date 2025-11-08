@@ -49,10 +49,16 @@ export class StructuredLogger implements Logger {
     const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),
       level,
-      message,
-      context,
-      error
+      message
     };
+    
+    if (context !== undefined) {
+      logEntry.context = context;
+    }
+    
+    if (error !== undefined) {
+      logEntry.error = error;
+    }
 
     if (this.config.enableConsole) {
       this.writeToConsole(logEntry);
@@ -61,14 +67,14 @@ export class StructuredLogger implements Logger {
 
   private writeToConsole(entry: LogEntry): void {
     const levelName = LogLevel[entry.level];
-    
+
     if (this.config.format === 'json') {
       const jsonEntry = {
         timestamp: entry.timestamp,
         level: levelName,
         message: entry.message,
         ...(entry.context && { context: entry.context }),
-        ...(entry.error && { 
+        ...(entry.error && {
           error: {
             name: entry.error.name,
             message: entry.error.message,
@@ -76,17 +82,17 @@ export class StructuredLogger implements Logger {
           }
         })
       };
-      
-      console.log(JSON.stringify(jsonEntry));
+
+      console.error(JSON.stringify(jsonEntry));
     } else {
       // Text format
       const contextStr = entry.context ? ` ${JSON.stringify(entry.context)}` : '';
       const errorStr = entry.error ? ` ERROR: ${entry.error.message}` : '';
-      
-      console.log(`[${entry.timestamp}] ${levelName}: ${entry.message}${contextStr}${errorStr}`);
-      
+
+      console.error(`[${entry.timestamp}] ${levelName}: ${entry.message}${contextStr}${errorStr}`);
+
       if (entry.error?.stack) {
-        console.log(entry.error.stack);
+        console.error(entry.error.stack);
       }
     }
   }

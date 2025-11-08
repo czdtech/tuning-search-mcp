@@ -62,7 +62,9 @@ export class RateLimitError extends TuningSearchError {
 
   constructor(message = 'Rate limit exceeded', resetTime?: Date) {
     super(message, true); // Retryable after some time
-    this.resetTime = resetTime;
+    if (resetTime !== undefined) {
+      this.resetTime = resetTime;
+    }
   }
 
   override toJSON(): Record<string, unknown> {

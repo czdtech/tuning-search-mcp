@@ -370,7 +370,7 @@ export class CacheService {
   private stopAutoCleanup(): void {
     if (this.cleanupTimer) {
       clearInterval(this.cleanupTimer);
-      this.cleanupTimer = undefined;
+      (this.cleanupTimer as any) = undefined;
     }
   }
 

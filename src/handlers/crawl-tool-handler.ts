@@ -123,20 +123,44 @@ export class CrawlToolHandler {
    * Parse and validate crawl arguments
    */
   private parseAndValidateArgs(args: unknown): CrawlToolArgs {
+    const normalized = this.normalizeArgs(args);
+
+    // Explicit required-field check for clearer messaging
+    if (!normalized || typeof (normalized as any).url !== 'string' || ((normalized as any).url as string).trim().length === 0) {
+      throw new ValidationError(
+        'Invalid crawl arguments',
+        ['URL is required and cannot be empty']
+      );
+    }
+
     // Basic type validation
-    if (!validateCrawlToolArgs(args)) {
+    if (!validateCrawlToolArgs(normalized)) {
       throw new ValidationError(
         'Invalid crawl arguments',
         ['Arguments do not match expected CrawlToolArgs schema']
       );
     }
 
-    const crawlArgs = args as CrawlToolArgs;
+    const crawlArgs = normalized as CrawlToolArgs;
 
     // Additional business logic validation
     this.validateBusinessRules(crawlArgs);
 
     return crawlArgs;
+  }
+
+  private normalizeArgs(args: unknown): Record<string, unknown> {
+    if (!args || typeof args !== 'object') return {} as any;
+    const src = args as Record<string, unknown>;
+    const out: Record<string, unknown> = { ...src };
+
+    const map: Record<string, string> = { URL: 'url', Url: 'url' };
+    for (const [from, to] of Object.entries(map)) {
+      if (out[from] !== undefined && out[to] === undefined) {
+        out[to] = out[from];
+      }
+    }
+    return out;
   }
 
   /**
@@ -470,6 +494,10 @@ export class CrawlToolHandler {
       }
     } else if (error instanceof Error) {
       message = `Crawl Error: ${error.message}`;
+      const lower = error.message.toLowerCase();
+      if (lower.includes('network')) {
+        message += ' (network error)';
+      }
     }
 
     return {

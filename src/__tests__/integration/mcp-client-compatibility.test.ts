@@ -647,7 +647,7 @@ describe("MCP Client Compatibility Tests", () => {
       expect(health).toHaveProperty("status");
       expect(health).toHaveProperty("initialized");
       expect(health.status).toBe("running");
-      expect(health.initialized).toBe(true);
+      expect((health as any).initialized).toBe(true);
 
       // Should provide metrics for monitoring
       if ("totalRequests" in health) {

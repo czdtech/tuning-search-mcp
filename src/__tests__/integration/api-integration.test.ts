@@ -28,27 +28,31 @@ describe('API Integration Tests', () => {
   beforeEach(async () => {
     mockApiServer.resetHandlers();
     
+    // Set integration test flag for retry config
+    process.env.INTEGRATION_TEST = '1';
+
     // Initialize services
     configService = new ConfigService();
     await configService.initialize();
-    
+
     client = new TuningSearchClient(configService.getConfig());
     searchService = new SearchService(client);
   });
 
   describe('Search API Integration', () => {
     it('should perform successful search with basic parameters', async () => {
-      // Mock successful search response
+      // Mock successful search response - use GET as per MSW docs, query params are auto-handled
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/search', async ({ request }) => {
-          const body = await request.json() as any;
+        http.get('https://api.test.tuningsearch.com/v1/search', ({ request }) => {
+          const url = new URL(request.url);
+          const q = url.searchParams.get('q');
           
-          expect(body.q).toBe('integration test');
-          
+          expect(q).toBe('integration test');
+
           return HttpResponse.json({
             success: true,
             data: {
-              query: body.q,
+              query: q,
               results: [
                 {
                   title: 'Integration Test Result',
@@ -71,27 +75,27 @@ describe('API Integration Tests', () => {
 
       expect(result.isError).toBe(false);
       expect(result.content).toHaveLength(1);
-      expect(result.content[0].text).toContain('Integration Test Result');
-      expect(result.content[0].text).toContain('https://example.com/integration');
+      expect(result.content[0]!.text).toContain('Integration Test Result');
+      expect(result.content[0]!.text).toContain('https://example.com/integration');
     });
 
     it('should handle search with all parameters', async () => {
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/search', async ({ request }) => {
-          const body = await request.json() as any;
+        http.get('https://api.test.tuningsearch.com/v1/search', ({ request }) => {
+          const url = new URL(request.url);
           
-          expect(body.q).toBe('comprehensive test');
-          expect(body.language).toBe('en');
-          expect(body.country).toBe('US');
-          expect(body.page).toBe(2);
-          expect(body.safe).toBe(1);
-          expect(body.timeRange).toBe('month');
-          expect(body.service).toBe('google');
-          
+          expect(url.searchParams.get('q')).toBe('comprehensive test');
+          expect(url.searchParams.get('language')).toBe('en');
+          expect(url.searchParams.get('country')).toBe('US');
+          expect(url.searchParams.get('page')).toBe('2');
+          expect(url.searchParams.get('safe')).toBe('1');
+          expect(url.searchParams.get('timeRange')).toBe('month');
+          expect(url.searchParams.get('service')).toBe('google');
+
           return HttpResponse.json({
             success: true,
             data: {
-              query: body.q,
+              query: url.searchParams.get('q'),
               results: [
                 {
                   title: 'Comprehensive Test Result',
@@ -118,12 +122,12 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(false);
-      expect(result.content[0].text).toContain('Comprehensive Test Result');
+      expect(result.content[0]!.text).toContain('Comprehensive Test Result');
     });
 
     it('should handle empty search results', async () => {
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/search', () => {
+        http.get('https://api.test.tuningsearch.com/v1/search', () => {
           return HttpResponse.json({
             success: true,
             data: {
@@ -142,22 +146,22 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(false);
-      expect(result.content[0].text).toContain('No results found');
+      expect(result.content[0]!.text).toContain('No results found');
     });
 
     it('should handle search with special characters', async () => {
       const specialQuery = 'test "quoted text" AND (special OR characters) -excluded';
-      
+
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/search', async ({ request }) => {
-          const body = await request.json() as any;
-          
-          expect(body.q).toBe(specialQuery);
-          
+        http.get('https://api.test.tuningsearch.com/v1/search', ({ request }) => {
+          const url = new URL(request.url);
+
+          expect(url.searchParams.get('q')).toBe(specialQuery);
+
           return HttpResponse.json({
             success: true,
             data: {
-              query: body.q,
+              query: url.searchParams.get('q'),
               results: [
                 {
                   title: 'Special Characters Result',
@@ -178,7 +182,7 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(false);
-      expect(result.content[0].text).toContain('Special Characters Result');
+      expect(result.content[0]!.text).toContain('Special Characters Result');
     });
 
     it('should handle large result sets', async () => {
@@ -190,7 +194,7 @@ describe('API Integration Tests', () => {
       }));
 
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/search', () => {
+        http.get('https://api.test.tuningsearch.com/v1/search', () => {
           return HttpResponse.json({
             success: true,
             data: {
@@ -208,23 +212,23 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(false);
-      expect(result.content[0].text).toContain('Large Result 1');
-      expect(result.content[0].text).toContain('Large Result 20');
+      expect(result.content[0]!.text).toContain('Large Result 1');
+      expect(result.content[0]!.text).toContain('Large Result 20');
     });
   });
 
   describe('News API Integration', () => {
     it('should perform successful news search', async () => {
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/news', async ({ request }) => {
-          const body = await request.json() as any;
-          
-          expect(body.q).toBe('breaking news');
-          
+        http.get('https://api.test.tuningsearch.com/v1/news', ({ request }) => {
+          const url = new URL(request.url);
+
+          expect(url.searchParams.get('q')).toBe('breaking news');
+
           return HttpResponse.json({
             success: true,
             data: {
-              query: body.q,
+              query: url.searchParams.get('q'),
               results: [
                 {
                   title: 'Breaking News Article',
@@ -247,23 +251,23 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(false);
-      expect(result.content[0].text).toContain('Breaking News Article');
-      expect(result.content[0].text).toContain('News Source');
-      expect(result.content[0].text).toContain('2024-01-15');
+      expect(result.content[0]!.text).toContain('Breaking News Article');
+      expect(result.content[0]!.text).toContain('News Source');
+      expect(result.content[0]!.text).toContain('2024-01-15');
     });
 
     it('should handle news search with time range', async () => {
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/news', async ({ request }) => {
-          const body = await request.json() as any;
-          
-          expect(body.q).toBe('recent news');
-          expect(body.timeRange).toBe('day');
-          
+        http.get('https://api.test.tuningsearch.com/v1/news', ({ request }) => {
+          const url = new URL(request.url);
+
+          expect(url.searchParams.get('q')).toBe('recent news');
+          expect(url.searchParams.get('timeRange')).toBe('day');
+
           return HttpResponse.json({
             success: true,
             data: {
-              query: body.q,
+              query: url.searchParams.get('q'),
               results: [
                 {
                   title: 'Recent News Article',
@@ -287,23 +291,23 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(false);
-      expect(result.content[0].text).toContain('Recent News Article');
-      expect(result.content[0].text).toContain('Today News');
+      expect(result.content[0]!.text).toContain('Recent News Article');
+      expect(result.content[0]!.text).toContain('Today News');
     });
 
     it('should handle news search with language and country', async () => {
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/news', async ({ request }) => {
-          const body = await request.json() as any;
-          
-          expect(body.q).toBe('local news');
-          expect(body.language).toBe('en');
-          expect(body.country).toBe('GB');
-          
+        http.get('https://api.test.tuningsearch.com/v1/news', ({ request }) => {
+          const url = new URL(request.url);
+
+          expect(url.searchParams.get('q')).toBe('local news');
+          expect(url.searchParams.get('language')).toBe('en');
+          expect(url.searchParams.get('country')).toBe('GB');
+
           return HttpResponse.json({
             success: true,
             data: {
-              query: body.q,
+              query: url.searchParams.get('q'),
               results: [
                 {
                   title: 'UK Local News',
@@ -328,25 +332,25 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(false);
-      expect(result.content[0].text).toContain('UK Local News');
-      expect(result.content[0].text).toContain('UK News');
+      expect(result.content[0]!.text).toContain('UK Local News');
+      expect(result.content[0]!.text).toContain('UK News');
     });
   });
 
   describe('Crawl API Integration', () => {
     it('should perform successful page crawl', async () => {
       const testUrl = 'https://example.com/test-page';
-      
+
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/crawl', async ({ request }) => {
-          const body = await request.json() as any;
-          
-          expect(body.url).toBe(testUrl);
-          
+        http.get('https://api.test.tuningsearch.com/v1/crawl', ({ request }) => {
+          const url = new URL(request.url);
+
+          expect(url.searchParams.get('url')).toBe(testUrl);
+
           return HttpResponse.json({
             success: true,
             data: {
-              url: body.url,
+              url: url.searchParams.get('url'),
               title: 'Test Page Title',
               content: 'This is the extracted content from the test page.',
               metadata: {
@@ -367,24 +371,24 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(false);
-      expect(result.content[0].text).toContain('Test Page Title');
-      expect(result.content[0].text).toContain('extracted content');
-      expect(result.content[0].text).toContain('Test page description');
+      expect(result.content[0]!.text).toContain('Test Page Title');
+      expect(result.content[0]!.text).toContain('extracted content');
+      expect(result.content[0]!.text).toContain('Test page description');
     });
 
     it('should handle crawl of different content types', async () => {
       const testUrl = 'https://example.com/article';
-      
+
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/crawl', async ({ request }) => {
-          const body = await request.json() as any;
-          
-          expect(body.url).toBe(testUrl);
-          
+        http.get('https://api.test.tuningsearch.com/v1/crawl', ({ request }) => {
+          const url = new URL(request.url);
+
+          expect(url.searchParams.get('url')).toBe(testUrl);
+
           return HttpResponse.json({
             success: true,
             data: {
-              url: body.url,
+              url: url.searchParams.get('url'),
               title: 'Article Title',
               content: 'Long article content with multiple paragraphs...',
               metadata: {
@@ -405,16 +409,16 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(false);
-      expect(result.content[0].text).toContain('Article Title');
-      expect(result.content[0].text).toContain('Long article content');
-      expect(result.content[0].text).toContain('6 minutes');
+      expect(result.content[0]!.text).toContain('Article Title');
+      expect(result.content[0]!.text).toContain('Long article content');
+      expect(result.content[0]!.text).toContain('6 minutes');
     });
 
     it('should handle crawl failures gracefully', async () => {
       const testUrl = 'https://example.com/not-found';
-      
+
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/crawl', () => {
+        http.get('https://api.test.tuningsearch.com/v1/crawl', () => {
           return HttpResponse.json({
             success: false,
             message: 'Page not found or inaccessible',
@@ -428,14 +432,14 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('not found');
+      expect(result.content[0]!.text).toContain('not found');
     });
   });
 
   describe('Error Handling and Edge Cases', () => {
     it('should handle API rate limiting', async () => {
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/search', () => {
+        http.get('https://api.test.tuningsearch.com/v1/search', () => {
           return HttpResponse.json({
             success: false,
             message: 'Rate limit exceeded. Please try again later.',
@@ -449,12 +453,12 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('rate limit');
+      expect(result.content[0]!.text).toContain('rate limit');
     });
 
     it('should handle authentication errors', async () => {
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/search', () => {
+        http.get('https://api.test.tuningsearch.com/v1/search', () => {
           return HttpResponse.json({
             success: false,
             message: 'Invalid API key provided',
@@ -468,16 +472,16 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('API key');
+      expect(result.content[0]!.text).toContain('API key');
     });
 
     it('should handle server errors with retry', async () => {
       let attemptCount = 0;
-      
+
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/search', () => {
+        http.get('https://api.test.tuningsearch.com/v1/search', () => {
           attemptCount++;
-          
+
           if (attemptCount < 3) {
             return HttpResponse.json({
               success: false,
@@ -485,7 +489,7 @@ describe('API Integration Tests', () => {
               code: 'SERVER_ERROR'
             }, { status: 500 });
           }
-          
+
           return HttpResponse.json({
             success: true,
             data: {
@@ -510,15 +514,17 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(false);
-      expect(result.content[0].text).toContain('Retry Success');
+      expect(result.content[0]!.text).toContain('Retry Success');
       expect(attemptCount).toBe(3); // Should have retried twice
     });
 
     it('should handle network timeouts', async () => {
+      // Use delay longer than client timeout (2000ms in test env) to ensure timeout
+      const delay = process.env.JEST_WORKER_ID ? 3000 : 10000;
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/search', async () => {
+        http.get('https://api.test.tuningsearch.com/v1/search', async () => {
           // Simulate timeout by delaying response beyond timeout limit
-          await new Promise(resolve => setTimeout(resolve, 10000));
+          await new Promise(resolve => setTimeout(resolve, delay));
           return HttpResponse.json({ success: true });
         })
       );
@@ -528,12 +534,12 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('timeout');
-    });
+      expect(result.content[0]!.text).toContain('timeout');
+    }, 15000); // Increase test timeout to 15 seconds
 
     it('should handle malformed API responses', async () => {
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/search', () => {
+        http.get('https://api.test.tuningsearch.com/v1/search', () => {
           return HttpResponse.text('Invalid JSON response');
         })
       );
@@ -543,12 +549,12 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('response');
+      expect(result.content[0]!.text).toContain('response');
     });
 
     it('should handle missing required fields in API response', async () => {
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/search', () => {
+        http.get('https://api.test.tuningsearch.com/v1/search', () => {
           return HttpResponse.json({
             success: true,
             // Missing 'data' field
@@ -563,25 +569,25 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('Invalid');
+      expect(result.content[0]!.text).toContain('Invalid');
     });
   });
 
   describe('Performance and Load Testing', () => {
     it('should handle multiple concurrent requests', async () => {
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/search', async ({ request }) => {
-          const body = await request.json() as any;
-          
+        http.get('https://api.test.tuningsearch.com/v1/search', ({ request }) => {
+          const url = new URL(request.url);
+
           return HttpResponse.json({
             success: true,
             data: {
-              query: body.q,
+              query: url.searchParams.get('q'),
               results: [
                 {
-                  title: `Concurrent Result for ${body.q}`,
-                  url: `https://example.com/${body.q.replace(/\s+/g, '-')}`,
-                  content: `Content for ${body.q}`,
+                  title: `Concurrent Result for ${url.searchParams.get('q') || 'unknown'}`,
+                  url: `https://example.com/${(url.searchParams.get('q') || 'unknown').replace(/\s+/g, '-')}`,
+                  content: `Content for ${url.searchParams.get('q') || 'unknown'}`,
                   position: 1
                 }
               ]
@@ -594,13 +600,13 @@ describe('API Integration Tests', () => {
 
       const queries = [
         'concurrent test 1',
-        'concurrent test 2', 
+        'concurrent test 2',
         'concurrent test 3',
         'concurrent test 4',
         'concurrent test 5'
       ];
 
-      const promises = queries.map(q => 
+      const promises = queries.map(q =>
         searchService.performSearch({ q })
       );
 
@@ -608,13 +614,13 @@ describe('API Integration Tests', () => {
 
       results.forEach((result, index) => {
         expect(result.isError).toBe(false);
-        expect(result.content[0].text).toContain(`Concurrent Result for ${queries[index]}`);
+        expect(result.content[0]!.text).toContain(`Concurrent Result for ${queries[index]}`);
       });
     });
 
     it('should maintain performance metrics during load', async () => {
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/search', () => {
+        http.get('https://api.test.tuningsearch.com/v1/search', () => {
           return HttpResponse.json({
             success: true,
             data: {
@@ -648,9 +654,9 @@ describe('API Integration Tests', () => {
 
     it('should handle memory efficiently with large responses', async () => {
       const largeContent = 'x'.repeat(100000); // 100KB of content
-      
+
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/search', () => {
+        http.get('https://api.test.tuningsearch.com/v1/search', () => {
           return HttpResponse.json({
             success: true,
             data: {
@@ -675,8 +681,8 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(false);
-      expect(result.content[0].text).toContain('Large Content Result');
-      expect(result.content[0].text.length).toBeGreaterThan(100000);
+      expect(result.content[0]!.text).toContain('Large Content Result');
+      expect(result.content[0]!.text.length).toBeGreaterThan(100000);
     });
   });
 
@@ -726,17 +732,17 @@ describe('API Integration Tests', () => {
   describe('Boundary Conditions', () => {
     it('should handle extremely long queries', async () => {
       const longQuery = 'a'.repeat(10000);
-      
+
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/search', async ({ request }) => {
-          const body = await request.json() as any;
-          
-          expect(body.q).toBe(longQuery);
-          
+        http.get('https://api.test.tuningsearch.com/v1/search', ({ request }) => {
+          const url = new URL(request.url);
+
+          expect(url.searchParams.get('q')).toBe(longQuery);
+
           return HttpResponse.json({
             success: true,
             data: {
-              query: body.q,
+              query: url.searchParams.get('q'),
               results: [
                 {
                   title: 'Long Query Result',
@@ -757,7 +763,7 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(false);
-      expect(result.content[0].text).toContain('Long Query Result');
+      expect(result.content[0]!.text).toContain('Long Query Result');
     });
 
     it('should handle empty query strings', async () => {
@@ -766,7 +772,7 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('query');
+      expect(result.content[0]!.text).toContain('query');
     });
 
     it('should handle invalid URL formats in crawl', async () => {
@@ -775,20 +781,20 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('valid URL');
+      expect(result.content[0]!.text).toContain('valid URL');
     });
 
     it('should handle very large page numbers', async () => {
       mockApiServer.use(
-        http.post('https://api.test.tuningsearch.com/v1/search', async ({ request }) => {
-          const body = await request.json() as any;
-          
-          expect(body.page).toBe(999999);
-          
+        http.get('https://api.test.tuningsearch.com/v1/search', ({ request }) => {
+          const url = new URL(request.url);
+
+          expect(parseInt(url.searchParams.get('page') || '0')).toBe(999999);
+
           return HttpResponse.json({
             success: true,
             data: {
-              query: body.q,
+              query: url.searchParams.get('q'),
               results: [],
               suggestions: []
             },
@@ -804,7 +810,7 @@ describe('API Integration Tests', () => {
       });
 
       expect(result.isError).toBe(false);
-      expect(result.content[0].text).toContain('No results found');
+      expect(result.content[0]!.text).toContain('No results found');
     });
   });
 });

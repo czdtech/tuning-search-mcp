@@ -51,7 +51,7 @@ describe('MCP Tool Handlers', () => {
       const result = await searchHandler.handleSearchRequest(args);
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('Validation Error');
+      expect(result.content[0]!.text).toContain('Validation Error');
     });
 
     it('should validate arguments statically', () => {
@@ -70,7 +70,7 @@ describe('MCP Tool Handlers', () => {
 
     it('should provide handler information', () => {
       const info = searchHandler.getHandlerInfo();
-      
+
       expect(info.name).toBe('SearchToolHandler');
       expect(info.supportedOperations).toContain('handleSearchRequest');
       expect(info.validationRules).toContain('Query is required and non-empty');
@@ -89,8 +89,8 @@ describe('MCP Tool Handlers', () => {
       const result = await newsHandler.handleNewsRequest(args);
 
       expect(mockSearchService.performNewsSearch).toHaveBeenCalledWith(args);
-      expect(result.content[0].text).toContain('News results');
-      expect(result.content[0].text).toContain('News Search Metadata');
+      expect(result.content[0]!.text).toContain('News results');
+      expect(result.content[0]!.text).toContain('News Search Metadata');
     });
 
     it('should handle validation errors', async () => {
@@ -98,7 +98,7 @@ describe('MCP Tool Handlers', () => {
       const result = await newsHandler.handleNewsRequest(args);
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('News Search Validation Error');
+      expect(result.content[0]!.text).toContain('News Search Validation Error');
     });
 
     it('should validate arguments statically', () => {
@@ -117,7 +117,7 @@ describe('MCP Tool Handlers', () => {
 
     it('should provide handler information', () => {
       const info = newsHandler.getHandlerInfo();
-      
+
       expect(info.name).toBe('NewsToolHandler');
       expect(info.supportedOperations).toContain('handleNewsRequest');
       expect(info.newsSpecificFeatures).toContain('Source metadata extraction');
@@ -136,8 +136,8 @@ describe('MCP Tool Handlers', () => {
       const result = await crawlHandler.handleCrawlRequest(args);
 
       expect(mockSearchService.performCrawl).toHaveBeenCalledWith(args);
-      expect(result.content[0].text).toContain('Crawl results');
-      expect(result.content[0].text).toContain('Crawl Metadata');
+      expect(result.content[0]!.text).toContain('Crawl results');
+      expect(result.content[0]!.text).toContain('Crawl Metadata');
     });
 
     it('should handle validation errors', async () => {
@@ -145,7 +145,7 @@ describe('MCP Tool Handlers', () => {
       const result = await crawlHandler.handleCrawlRequest(args);
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('Crawl Validation Error');
+      expect(result.content[0]!.text).toContain('Crawl Validation Error');
     });
 
     it('should handle security validation errors', async () => {
@@ -153,7 +153,7 @@ describe('MCP Tool Handlers', () => {
       const result = await crawlHandler.handleCrawlRequest(args);
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('Crawl Security Error');
+      expect(result.content[0]!.text).toContain('Crawl Security Error');
     });
 
     it('should validate arguments statically', () => {
@@ -172,7 +172,7 @@ describe('MCP Tool Handlers', () => {
 
     it('should provide handler information', () => {
       const info = crawlHandler.getHandlerInfo();
-      
+
       expect(info.name).toBe('CrawlToolHandler');
       expect(info.supportedOperations).toContain('handleCrawlRequest');
       expect(info.securityFeatures).toContain('Protocol validation');
@@ -181,7 +181,7 @@ describe('MCP Tool Handlers', () => {
     it('should allow security configuration updates', () => {
       const newConfig = { allowPrivateNetworks: true };
       crawlHandler.updateSecurityConfig(newConfig);
-      
+
       const config = crawlHandler.getSecurityConfig();
       expect(config.allowPrivateNetworks).toBe(true);
     });

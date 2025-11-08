@@ -161,10 +161,15 @@ export function validateCrawlArgs(args: unknown): { valid: boolean; error?: stri
     // URL security validation
     const urlValidation = validateUrl(validatedArgs.url);
     if (!urlValidation.valid) {
-      return {
-        valid: false,
-        error: urlValidation.error
+      const result: { valid: boolean; error?: string; data?: CrawlToolArgs } = {
+        valid: false
       };
+      
+      if (urlValidation.error !== undefined) {
+        result.error = urlValidation.error;
+      }
+      
+      return result;
     }
 
     return {

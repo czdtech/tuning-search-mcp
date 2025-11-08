@@ -36,7 +36,7 @@ describe('HealthCheckService', () => {
       const customConfig = { checkInterval: 60000, componentTimeout: 10000 };
       const customService = new HealthCheckService(performanceMonitor, customConfig);
       const config = customService.getConfig();
-      
+
       expect(config.checkInterval).toBe(60000);
       expect(config.componentTimeout).toBe(10000);
       expect(config.enabled).toBe(DEFAULT_HEALTH_CONFIG.enabled);
@@ -53,17 +53,17 @@ describe('HealthCheckService', () => {
       });
 
       healthCheckService.registerComponent('test-component', healthCheck);
-      
+
       const components = healthCheckService.getRegisteredComponents();
       expect(components).toContain('test-component');
     });
 
     it('should unregister health check components', () => {
       const healthCheck = jest.fn();
-      
+
       healthCheckService.registerComponent('test-component', healthCheck);
       expect(healthCheckService.getRegisteredComponents()).toContain('test-component');
-      
+
       healthCheckService.unregisterComponent('test-component');
       expect(healthCheckService.getRegisteredComponents()).not.toContain('test-component');
     });
@@ -106,12 +106,12 @@ describe('HealthCheckService', () => {
 
       expect(report.status).toBe(HealthStatus.CRITICAL);
       expect(report.components).toHaveLength(1);
-      expect(report.components[0].status).toBe(HealthStatus.CRITICAL);
-      expect(report.components[0].message).toContain('Health check failed');
+      expect(report.components[0]!.status).toBe(HealthStatus.CRITICAL);
+      expect(report.components[0]!.message).toContain('Health check failed');
     });
 
     it('should handle component timeouts', async () => {
-      const slowComponent = jest.fn().mockImplementation(() => 
+      const slowComponent = jest.fn().mockImplementation(() =>
         new Promise(resolve => setTimeout(resolve, 10000)) // 10 second delay
       );
 
@@ -121,8 +121,8 @@ describe('HealthCheckService', () => {
       const report = await fastService.performHealthCheck();
 
       expect(report.components).toHaveLength(1);
-      expect(report.components[0].status).toBe(HealthStatus.CRITICAL);
-      expect(report.components[0].message).toContain('timeout');
+      expect(report.components[0]!.status).toBe(HealthStatus.CRITICAL);
+      expect(report.components[0]!.message).toContain('timeout');
     });
 
     it('should get individual component health', async () => {
@@ -245,7 +245,7 @@ describe('HealthCheckService', () => {
     it('should not start if disabled', () => {
       const disabledService = new HealthCheckService(performanceMonitor, { enabled: false });
       disabledService.start();
-      
+
       // Should not throw or create interval
       expect(() => disabledService.stop()).not.toThrow();
     });
@@ -254,10 +254,10 @@ describe('HealthCheckService', () => {
   describe('configuration updates', () => {
     it('should update configuration', () => {
       const newConfig = { checkInterval: 60000, componentTimeout: 10000 };
-      
+
       healthCheckService.updateConfig(newConfig);
       const config = healthCheckService.getConfig();
-      
+
       expect(config.checkInterval).toBe(60000);
       expect(config.componentTimeout).toBe(10000);
     });
@@ -266,7 +266,7 @@ describe('HealthCheckService', () => {
   describe('health summary', () => {
     it('should provide health summary', () => {
       const summary = healthCheckService.getHealthSummary();
-      
+
       expect(summary.status).toBe(HealthStatus.UNKNOWN);
       expect(summary.uptime).toBeGreaterThanOrEqual(0);
       expect(summary.lastCheck).toBeNull();
@@ -286,7 +286,7 @@ describe('HealthCheckService', () => {
       await healthCheckService.performHealthCheck();
 
       const summary = healthCheckService.getHealthSummary();
-      
+
       expect(summary.status).toBe(HealthStatus.HEALTHY);
       expect(summary.lastCheck).toBeGreaterThan(0);
       expect(summary.componentCount).toBe(1);

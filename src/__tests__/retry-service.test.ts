@@ -36,7 +36,7 @@ describe('RetryService', () => {
       const customConfig = { maxAttempts: 5, initialDelay: 2000 };
       const service = new RetryService(customConfig);
       const config = service.getConfig();
-      
+
       expect(config.maxAttempts).toBe(5);
       expect(config.initialDelay).toBe(2000);
       expect(config.backoffFactor).toBe(DEFAULT_RETRY_CONFIG.backoffFactor);
@@ -46,9 +46,9 @@ describe('RetryService', () => {
   describe('executeWithRetry', () => {
     test('should return result on first success', async () => {
       const operation = jest.fn().mockResolvedValue('success');
-      
+
       const result = await retryService.executeWithRetry(operation);
-      
+
       expect(result).toBe('success');
       expect(operation).toHaveBeenCalledTimes(1);
     });
@@ -58,16 +58,16 @@ describe('RetryService', () => {
         .mockRejectedValueOnce(new NetworkError('Network failed'))
         .mockRejectedValueOnce(new TimeoutError('Timeout'))
         .mockResolvedValue('success');
-      
+
       const result = await retryService.executeWithRetry(operation);
-      
+
       expect(result).toBe('success');
       expect(operation).toHaveBeenCalledTimes(3);
     });
 
     test('should not retry on non-retryable error', async () => {
       const operation = jest.fn().mockRejectedValue(new APIKeyError('Invalid API key'));
-      
+
       await expect(retryService.executeWithRetry(operation)).rejects.toThrow('Invalid API key');
       expect(operation).toHaveBeenCalledTimes(1);
     });
@@ -75,7 +75,7 @@ describe('RetryService', () => {
     test('should respect maxAttempts limit', async () => {
       const operation = jest.fn().mockRejectedValue(new NetworkError('Network failed'));
       const config = { maxAttempts: 2 };
-      
+
       await expect(retryService.executeWithRetry(operation, config)).rejects.toThrow('Network failed');
       expect(operation).toHaveBeenCalledTimes(2);
     });
@@ -84,11 +84,11 @@ describe('RetryService', () => {
       const operation = jest.fn()
         .mockRejectedValueOnce(new APIKeyError('Invalid API key'))
         .mockResolvedValue('success');
-      
+
       const config = { retryableErrors: ['API_KEY_ERROR'] };
-      
+
       const result = await retryService.executeWithRetry(operation, config);
-      
+
       expect(result).toBe('success');
       expect(operation).toHaveBeenCalledTimes(2);
     });
@@ -97,11 +97,11 @@ describe('RetryService', () => {
       const operation = jest.fn()
         .mockRejectedValueOnce(new NetworkError('Network failed'))
         .mockResolvedValue('success');
-      
+
       const onRetry = jest.fn();
-      
+
       await retryService.executeWithRetry(operation, undefined, onRetry);
-      
+
       expect(onRetry).toHaveBeenCalledTimes(1);
       expect(onRetry).toHaveBeenCalledWith(expect.objectContaining({
         attempt: 1,
@@ -115,9 +115,9 @@ describe('RetryService', () => {
   describe('executeWithRetryDetails', () => {
     test('should return detailed results on success', async () => {
       const operation = jest.fn().mockResolvedValue('success');
-      
+
       const result = await retryService.executeWithRetryDetails(operation);
-      
+
       expect(result).toEqual({
         result: 'success',
         totalAttempts: 1,
@@ -130,9 +130,9 @@ describe('RetryService', () => {
       const error = new NetworkError('Network failed');
       const operation = jest.fn().mockRejectedValue(error);
       const config = { maxAttempts: 2 };
-      
+
       const result = await retryService.executeWithRetryDetails(operation, config);
-      
+
       expect(result).toEqual({
         error,
         totalAttempts: 2,
@@ -152,56 +152,56 @@ describe('RetryService', () => {
   describe('delay calculation', () => {
     test('should calculate exponential backoff delays', async () => {
       const operation = jest.fn().mockRejectedValue(new NetworkError('Network failed'));
-      const config = { 
-        maxAttempts: 4, 
-        initialDelay: 10, 
+      const config = {
+        maxAttempts: 4,
+        initialDelay: 10,
         backoffFactor: 2,
         jitter: false // Disable jitter for predictable testing
       };
-      
+
       const result = await retryService.executeWithRetryDetails(operation, config);
-      
+
       expect(result.attempts).toHaveLength(3);
-      expect(result.attempts[0].delay).toBe(10); // 10 * 2^0
-      expect(result.attempts[1].delay).toBe(20); // 10 * 2^1
-      expect(result.attempts[2].delay).toBe(40); // 10 * 2^2
+      expect(result.attempts[0]!.delay).toBe(10); // 10 * 2^0
+      expect(result.attempts[1]!.delay).toBe(20); // 10 * 2^1
+      expect(result.attempts[2]!.delay).toBe(40); // 10 * 2^2
     });
 
     test('should respect maxDelay limit', async () => {
       const operation = jest.fn().mockRejectedValue(new NetworkError('Network failed'));
-      const config = { 
-        maxAttempts: 4, 
-        initialDelay: 10, 
+      const config = {
+        maxAttempts: 4,
+        initialDelay: 10,
         backoffFactor: 10,
         maxDelay: 30,
         jitter: false
       };
-      
+
       const result = await retryService.executeWithRetryDetails(operation, config);
-      
+
       expect(result.attempts).toHaveLength(3);
-      expect(result.attempts[0].delay).toBe(10);
-      expect(result.attempts[1].delay).toBe(30); // Limited by maxDelay
-      expect(result.attempts[2].delay).toBe(30); // Limited by maxDelay
+      expect(result.attempts[0]!.delay).toBe(10);
+      expect(result.attempts[1]!.delay).toBe(30); // Limited by maxDelay
+      expect(result.attempts[2]!.delay).toBe(30); // Limited by maxDelay
     });
 
     test('should add jitter when enabled', async () => {
       const operation = jest.fn().mockRejectedValue(new NetworkError('Network failed'));
-      
+
       // Run multiple times to test jitter variability
       const results = [];
       for (let i = 0; i < 5; i++) {
-        const config = { 
-          maxAttempts: 2, 
-          initialDelay: 100, 
+        const config = {
+          maxAttempts: 2,
+          initialDelay: 100,
           backoffFactor: 2,
           jitter: true
         };
-        
+
         const result = await retryService.executeWithRetryDetails(operation, config);
-        results.push(result.attempts[0].delay);
+        results.push(result.attempts[0]!.delay);
       }
-      
+
       // With jitter enabled, we should see some variation in delays
       const uniqueDelays = new Set(results);
       expect(uniqueDelays.size).toBeGreaterThan(1); // Should have different delays due to jitter
@@ -212,7 +212,7 @@ describe('RetryService', () => {
     test('should update configuration', () => {
       const newConfig = { maxAttempts: 5, initialDelay: 2000 };
       retryService.updateConfig(newConfig);
-      
+
       const config = retryService.getConfig();
       expect(config.maxAttempts).toBe(5);
       expect(config.initialDelay).toBe(2000);
@@ -224,9 +224,9 @@ describe('convenience functions', () => {
   describe('withRetry', () => {
     test('should work with default retry service', async () => {
       const operation = jest.fn().mockResolvedValue('success');
-      
+
       const result = await withRetry(operation);
-      
+
       expect(result).toBe('success');
     });
   });
@@ -234,9 +234,9 @@ describe('convenience functions', () => {
   describe('withRetryDetails', () => {
     test('should work with default retry service', async () => {
       const operation = jest.fn().mockResolvedValue('success');
-      
+
       const result = await withRetryDetails(operation);
-      
+
       expect(result.result).toBe('success');
     });
   });
@@ -262,9 +262,9 @@ describe('retryable decorator', () => {
     }
 
     const instance = new TestClass();
-    
+
     const result = await instance.testMethod();
-    
+
     expect(result).toBe('success');
     expect(instance.getCallCount()).toBe(3);
   });
@@ -285,7 +285,7 @@ describe('retryable decorator', () => {
     }
 
     const instance = new TestClass();
-    
+
     await expect(instance.testMethod()).rejects.toThrow('Invalid API key');
     expect(instance.getCallCount()).toBe(1);
   });
@@ -300,7 +300,7 @@ describe('error handling edge cases', () => {
 
   test('should handle non-Error thrown values', async () => {
     const operation = jest.fn().mockRejectedValue('string error');
-    
+
     await expect(retryService.executeWithRetry(operation)).rejects.toThrow('string error');
   });
 
@@ -308,20 +308,20 @@ describe('error handling edge cases', () => {
     const operation = jest.fn()
       .mockRejectedValueOnce(new NetworkError('Network failed'))
       .mockResolvedValue('success');
-    
+
     const onRetry = jest.fn().mockImplementation(() => {
       throw new Error('Callback error');
     });
-    
+
     // Mock console.warn to avoid noise in test output
     const originalWarn = console.warn;
     console.warn = jest.fn();
-    
+
     const result = await retryService.executeWithRetry(operation, undefined, onRetry);
-    
+
     expect(result).toBe('success');
     expect(console.warn).toHaveBeenCalledWith('Retry callback error:', expect.any(Error));
-    
+
     console.warn = originalWarn;
   });
 });

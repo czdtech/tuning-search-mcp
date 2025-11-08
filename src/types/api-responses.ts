@@ -1,6 +1,6 @@
 /**
  * TuningSearch API Response Type Definitions
- * 
+ *
  * This file contains all type definitions for TuningSearch API responses
  * including SearchResponse, NewsResponse, CrawlResponse and their related models.
  */
@@ -28,6 +28,7 @@ export interface SearchResult {
 
 export interface SearchResponse extends BaseApiResponse {
   data: {
+    /** Optional echoed query string (may be provided by some backends) */
     query?: string;
     results: SearchResult[];
     suggestions?: string[];
@@ -71,6 +72,25 @@ export interface CrawlMetadata {
 
 export interface CrawlResult {
   content: string;
+  url?: string;
+  title?: string;
+  statusCode?: number;
+  contentLength?: number;
+  crawlTime?: number;
+  metadata?: {
+    title?: string;
+    description?: string;
+    author?: string;
+    publishedDate?: string;
+    readingTime?: string;
+    wordCount?: number;
+    language?: string;
+    tags?: string[];
+    categories?: string[];
+    keywords?: string[];
+    charset?: string;
+    contentType?: string;
+  };
 }
 
 export interface CrawlResponse extends BaseApiResponse {
@@ -115,7 +135,13 @@ export function validateNewsResult(obj: any): obj is NewsResult {
 
 export function validateCrawlResult(obj: any): obj is CrawlResult {
   return typeof obj === 'object' &&
-         typeof obj.content === 'string';
+         typeof obj.content === 'string' &&
+         (obj.url === undefined || typeof obj.url === 'string') &&
+         (obj.title === undefined || typeof obj.title === 'string') &&
+         (obj.statusCode === undefined || typeof obj.statusCode === 'number') &&
+         (obj.contentLength === undefined || typeof obj.contentLength === 'number') &&
+         (obj.crawlTime === undefined || typeof obj.crawlTime === 'number') &&
+         (obj.metadata === undefined || typeof obj.metadata === 'object');
 }
 
 // Response validation functions
@@ -125,7 +151,6 @@ export function validateSearchResponse(obj: any): obj is SearchResponse {
          (obj.message === undefined || typeof obj.message === 'string') &&
          (obj.code === undefined || typeof obj.code === 'string') &&
          typeof obj.data === 'object' &&
-         (obj.data.query === undefined || typeof obj.data.query === 'string') &&
          Array.isArray(obj.data.results) &&
          obj.data.results.every(validateSearchResult);
 }

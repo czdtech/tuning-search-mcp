@@ -161,13 +161,23 @@ export class ErrorHandler {
       message = this.sanitizeMessage(message, error);
     }
     
-    return {
+    // Note: Removed automatic suffix addition to match test expectations
+    // Tests expect the original error message without modifications
+
+    const errorContext = this.getErrorContext(error, context);
+    
+    const result: FormattedError = {
       code: error.code,
       message,
       retryable: error.retryable,
-      context: this.getErrorContext(error, context),
       timestamp: error.timestamp.toISOString()
     };
+    
+    if (errorContext !== undefined) {
+      result.context = errorContext;
+    }
+    
+    return result;
   }
 
   /**

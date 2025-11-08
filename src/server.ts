@@ -360,7 +360,7 @@ export class TuningSearchServer {
       // Close transport connection
       if (this.transport) {
         await this.transport.close();
-        this.transport = undefined;
+        (this.transport as any) = undefined;
       }
 
       this.isRunning = false;

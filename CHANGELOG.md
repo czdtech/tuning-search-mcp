@@ -70,3 +70,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configuration examples for various MCP clients
 - Troubleshooting guide
 - Development setup instructions
+
+## [1.1.0] - 2024-01-08
+
+### Changed
+- Enhanced API response types with comprehensive validation functions
+- Improved configuration handling with better environment variable parsing
+- Updated type definitions for better error handling and null safety
+- Refined project structure and documentation organization
+
+### Technical Improvements
+- Better TypeScript strict mode compliance
+- Enhanced type safety for API responses and configuration
+- Improved null/undefined handling in configuration loading
+- Better error type definitions with optional properties
+- Cleaner code formatting and structure
+
+### Documentation
+- Updated .gitignore with additional patterns for build and test files
+- Simplified documentation structure by removing redundant files
